@@ -1,0 +1,24 @@
+# --- Proteção Geral (Vale para todas as pastas) ---
+**/venv/
+**/env/
+**/__pycache__/
+**/*.pyc
+**/.DS_Store
+**/.env
+
+# --- Django Específico ---
+**/*.log
+**/db.sqlite3
+**/media/
+**/static/staticfiles/
+
+# --- Power BI (Ignorar arquivos temporários ou de cache) ---
+**/*.abf
+**/*.pbit
+
+# --- Segurança CRÍTICA (Não suba isso nunca) ---
+**/*.session
+**/*.session-journal
+**/*.sql
+**/*.csv
+**/*.exe
