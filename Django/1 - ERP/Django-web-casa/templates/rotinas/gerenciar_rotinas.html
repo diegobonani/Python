@@ -1,0 +1,578 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestão de Rotinas{% endblock %}
+
+{% block style %}
+{{ block.super }}
+
+<style>
+    /* === 1. Estilos Gerais === */
+    .avatar-circle {
+        width: 40px; height: 40px; border-radius: 50%; 
+        background-color: #0d6efd; color: white; 
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 1rem;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        border: 2px solid #fff;
+    }
+    
+    /* === 2. TIMELINE DE AUDITORIA === */
+    .timeline-container { padding-left: 15px; padding-top: 20px; }
+    
+    .timeline-row {
+        border-left: 3px solid #e9ecef;
+        margin-left: 25px;
+        padding-left: 35px;
+        padding-bottom: 40px;
+        position: relative;
+    }
+    .timeline-row:last-child { border-left: 3px solid transparent; }
+
+    /* Bolinha do Horário */
+    .timeline-time-badge {
+        position: absolute;
+        left: -37px;
+        top: 0;
+        width: 74px; height: 74px;
+        border-radius: 50%;
+        background: #fff;
+        border: 4px solid #0d6efd;
+        color: #0d6efd;
+        font-weight: 800; font-size: 1.2rem;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        z-index: 10;
+    }
+
+    /* Card da Rotina (O Agrupador) */
+    .routine-audit-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        overflow: hidden;
+        transition: transform 0.2s;
+        margin-bottom: 20px;
+    }
+    .routine-audit-card:hover { transform: translateY(-3px); }
+
+    .routine-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Item do Usuário (Onde a ação acontece) */
+    .user-audit-item {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 15px;
+        display: flex; align-items: center; justify-content: space-between;
+        transition: all 0.2s;
+        height: 100%;
+    }
+    
+    /* Estados Visuais do Usuário */
+    .user-audit-item.status-pendente { border-left: 5px solid #ffc107; }
+    .user-audit-item.status-concluido { border-left: 5px solid #198754; background-color: #f3fcf7; }
+    .user-audit-item.status-nao_feito { border-left: 5px solid #dc3545; background-color: #fff5f5; }
+    .user-audit-item.status-justificado { border-left: 5px solid #0dcaf0; background-color: #f0fdff; }
+
+    /* Barra de Filtros Clean */
+    .filter-bar {
+        background: #fff; border: 1px solid #e9ecef; border-radius: 50px;
+        padding: 4px 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        display: flex; align-items: center; height: 48px;
+    }
+    .date-input-clean { border: none; background: transparent; font-weight: 600; color: #495057; outline: none; }
+    
+    /* Select2 Clean */
+    .select2-container--bootstrap-5 .select2-selection { border: none !important; box-shadow: none !important; background-color: transparent !important; }
+    .btn-pill { border-radius: 50px; padding-left: 1.2rem; padding-right: 1.2rem; }
+    .modal .select2-container--bootstrap-5 .select2-selection { background-color: #fff !important; border: 1px solid #dee2e6 !important; }
+    
+    /* Outros */
+    .table-responsive { overflow-x: auto; }
+    .card-castigo { border-left: 5px solid #dc3545; }
+</style>
+{% endblock %}
+
+{% block main_content %}
+{{ is_admin|json_script:"admin-flag" }}
+
+<div class="p-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+        <div class="d-flex align-items-center">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 50px; height: 50px;">
+                <i class="fas fa-clipboard-list fa-lg"></i>
+            </div>
+            <div>
+                <h4 class="mb-0 fw-bold text-dark">Auditoria de Rotina</h4>
+                <small class="text-muted">
+                    {% if is_admin %}Painel de Controle Diário{% else %}Minhas Tarefas{% endif %}
+                </small>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <form method="get" id="filtroForm" class="filter-bar">
+                <div class="d-flex align-items-center px-1">
+                    <i class="far fa-calendar-alt text-muted me-2"></i>
+                    <input type="date" name="data" value="{{ data_atual }}" 
+                           class="form-control form-control-sm date-input-clean p-0" 
+                           style="width: 125px;" onchange="document.getElementById('filtroForm').submit()">
+                </div>
+                {% if todos_usuarios %}
+                    <div class="border-start mx-3" style="height: 24px; border-color: #dee2e6 !important;"></div>
+                    <div class="d-flex align-items-center" style="min-width: 250px; max-width: 450px;">
+                        <select name="usuario_filtro" class="form-select border-0 select2-user-filter" multiple="multiple" style="width: 100%;">
+                            {% for u in todos_usuarios %}
+                                <option value="{{ u.id }}" {% if u.id in usuarios_selecionados %}selected{% endif %}>{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-light rounded-circle ms-2 shadow-sm text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                {% endif %}
+            </form>
+
+            {% if is_admin %}
+                <button class="btn btn-white border shadow-sm text-dark fw-bold btn-pill" data-bs-toggle="modal" data-bs-target="#modalImportarRotina">
+                    <i class="fas fa-history me-2 text-muted"></i>Clonar
+                </button>
+                <button class="btn btn-primary shadow fw-bold btn-pill" data-bs-toggle="modal" data-bs-target="#modalCriarMassa">
+                    <i class="fas fa-plus me-2"></i>Nova Tarefa
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3 border-bottom-0" id="rotinaTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-bold border bg-white" id="tarefas-tab" data-bs-toggle="tab" data-bs-target="#tarefas-pane" type="button">
+                <i class="fas fa-clock me-2 text-primary"></i>Linha do Tempo
+            </button>
+        </li>
+        <li class="nav-item ms-2">
+            <button class="nav-link fw-bold text-danger border bg-white" id="disciplina-tab" data-bs-toggle="tab" data-bs-target="#disciplina-pane" type="button">
+                <i class="fas fa-gavel me-2"></i>Disciplina
+            </button>
+        </li>
+        <li class="nav-item ms-2">
+            <button class="nav-link fw-bold text-secondary border bg-white" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historico-pane" type="button">
+                <i class="fas fa-archive me-2"></i>Histórico
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        
+        <div class="tab-pane fade show active ps-3" id="tarefas-pane">
+            
+            {% if tarefas %}
+                <div class="timeline-container">
+                    
+                    {% regroup tarefas by prazo_hora as timeline_horas %}
+
+                    {% for grupo_hora in timeline_horas %}
+                    <div class="timeline-row">
+                        <div class="timeline-time-badge">
+                            {% if grupo_hora.grouper %}{{ grupo_hora.grouper|time:"H:i" }}{% else %}--:--{% endif %}
+                        </div>
+
+                        <div class="ms-4">
+                            {% regroup grupo_hora.list by rotina as timeline_rotinas %}
+
+                            {% for grupo_rotina in timeline_rotinas %}
+                            <div class="routine-audit-card">
+                                
+                                <div class="routine-header">
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-0">{{ grupo_rotina.grouper.nome }}</h5>
+                                        {% if grupo_rotina.grouper.descricao %}
+                                            <small class="text-muted">{{ grupo_rotina.grouper.descricao }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        {% if grupo_rotina.grouper.tolerancia_minutos %}
+                                            <span class="badge bg-warning text-dark border"><i class="fas fa-stopwatch me-1"></i>{{ grupo_rotina.grouper.tolerancia_minutos }}min</span>
+                                        {% endif %}
+                                        <span class="badge bg-light text-secondary border ms-1">{{ grupo_rotina.list|length }} Pessoas</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-3">
+                                    <div class="row g-3">
+                                        {% for t in grupo_rotina.list %}
+                                        <div class="col-md-6 col-lg-4">
+                                            
+                                            <div class="user-audit-item status-{{ t.status|lower }} {% if 'JUSTIFICADO' in t.observacao_admin %}status-justificado{% endif %}" 
+                                                 id="card-tarefa-{{ t.id }}">
+                                                
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-circle me-3">{{ t.usuario.username|slice:":1"|upper }}</div>
+                                                    <div>
+                                                        <h6 class="fw-bold mb-0 text-dark">{{ t.usuario.username }}</h6>
+                                                        <small class="text-muted status-text" style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">
+                                                            {% if 'JUSTIFICADO' in t.observacao_admin %}
+                                                                <span class="text-info">Justificado</span>
+                                                            {% else %}
+                                                                {{ t.get_status_display }}
+                                                            {% endif %}
+                                                        </small>
+                                                    </div>
+                                                </div>
+
+                                                {% if is_admin %}
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm btn-light border shadow-sm text-success" 
+                                                            onclick="marcarComoFeito('{{ t.id }}', '{{ t.usuario.username }}')"
+                                                            title="Cumpriu">
+                                                        <i class="fas fa-check fa-lg"></i>
+                                                    </button>
+                                                    
+                                                    <button class="btn btn-sm btn-light border shadow-sm text-danger" 
+                                                            onclick="abrirDecisao('{{ t.id }}', '{{ t.usuario.username }}', '{{ t.usuario.id }}', '{{ t.rotina.nome }}')"
+                                                            title="Ocorrência">
+                                                        <i class="fas fa-times fa-lg"></i>
+                                                    </button>
+                                                </div>
+                                                {% else %}
+                                                    {% if t.status == 'CONCLUIDO' %}
+                                                        <i class="fas fa-check-circle text-success fa-2x"></i>
+                                                    {% elif t.status == 'NAO_FEITO' %}
+                                                        <i class="fas fa-times-circle text-danger fa-2x"></i>
+                                                    {% else %}
+                                                        <i class="far fa-circle text-muted fa-2x"></i>
+                                                    {% endif %}
+                                                {% endif %}
+
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %} </div>
+                    </div>
+                    {% endfor %} </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-coffee fa-3x text-muted mb-3 opacity-25"></i>
+                    <h5 class="text-muted">Tudo tranquilo por hoje.</h5>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="disciplina-pane">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header bg-danger text-white fw-bold"><i class="fas fa-lock me-2"></i>Em Castigo Agora</div>
+                        <div class="card-body bg-light">
+                            {% if castigos_ativos %}
+                                {% for c in castigos_ativos %}
+                                <div class="card card-castigo bg-white shadow-sm mb-3">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="fw-bold text-danger mb-0">{{ c.usuario.username|upper }}</h6>
+                                            <span class="badge bg-danger">Ativo</span>
+                                        </div>
+                                        <p class="mb-1 small"><strong>Motivo:</strong> {{ c.motivo }}</p>
+                                        {% if is_admin %}
+                                        <a href="{% url 'rotinas:liberar_castigo' c.id %}" class="btn btn-sm btn-outline-success w-100 mt-2"><i class="fas fa-unlock me-1"></i> Liberar</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-5 text-muted"><p>Ninguém de castigo!</p></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    {% if is_admin %}
+                    <div class="text-end mb-3">
+                        <button class="btn btn-danger shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAplicarCastigo"><i class="fas fa-gavel me-2"></i>Aplicar Consequência</button>
+                    </div>
+                    {% endif %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white fw-bold border-bottom"><i class="fas fa-history me-2 text-muted"></i>Últimas Ocorrências</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small"><tr><th>Data</th><th>Quem</th><th>Motivo</th><th>Pts</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    {% for h in historico_castigos_recente %}
+                                    <tr>
+                                        <td class="small text-muted">{{ h.data_ocorrencia|date:"d/m" }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ h.usuario.username }}</span></td>
+                                        <td>{{ h.motivo }}</td>
+                                        <td class="text-danger fw-bold">-{{ h.pontos_perdidos }}</td>
+                                        <td>{% if h.cumprido %}<i class="fas fa-check text-success"></i>{% else %}<i class="fas fa-clock text-danger"></i>{% endif %}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center py-4 text-muted">Histórico limpo.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="historico-pane">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white fw-bold border-bottom"><span><i class="fas fa-star text-warning me-2"></i>Histórico de Tarefas</span></div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small"><tr><th>Data</th><th>Usuário</th><th>Tarefa</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    {% for t in historico_tarefas_completo %}
+                                    <tr>
+                                        <td class="small text-muted">{{ t.data_tarefa|date:"d/m" }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ t.usuario.username }}</span></td>
+                                        <td>{{ t.rotina.nome }}</td>
+                                        <td>{% if t.status == 'CONCLUIDO' %}<span class="badge bg-success bg-opacity-10 text-success">Feito</span>{% else %}<span class="badge bg-danger bg-opacity-10 text-danger">Falhou</span>{% endif %}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="4" class="text-center py-4 text-muted">Vazio.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white fw-bold border-bottom"><i class="fas fa-gavel text-danger me-2"></i>Histórico de Penalidades</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small"><tr><th>Data</th><th>Usuário</th><th>Motivo</th><th>Perda</th></tr></thead>
+                                <tbody>
+                                    {% for c in historico_castigos_completo %}
+                                    <tr>
+                                        <td class="small text-muted">{{ c.data_ocorrencia|date:"d/m" }}</td>
+                                        <td><small class="fw-bold">{{ c.usuario.username }}</small></td>
+                                        <td class="small">{{ c.motivo }}</td>
+                                        <td class="text-center fw-bold text-danger">-{{ c.pontos_perdidos }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="4" class="text-center py-4 text-muted">Vazio.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% if is_admin %}
+
+<div class="modal fade" id="modalDecisaoAdmin" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Houve um Problema?</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light text-center p-4">
+                <h4 class="mb-3 text-dark fw-bold" id="decisao-titulo">O que aconteceu?</h4>
+                <p class="text-muted mb-4">A tarefa não foi realizada conforme o esperado.</p>
+
+                <div class="d-grid gap-3">
+                    <button type="button" class="btn btn-white border shadow-sm py-3 text-start px-4 d-flex align-items-center" onclick="confirmarJustificativa()">
+                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                            <i class="fas fa-hand-holding-heart"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">Justificar / Relevar</h6>
+                            <small class="text-muted">Atraso aceitável, imprevisto ou ajuda externa.</small>
+                        </div>
+                    </button>
+
+                    <button type="button" class="btn btn-white border border-danger shadow-sm py-3 text-start px-4 d-flex align-items-center" onclick="redirecionarParaCastigo()">
+                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-danger">Aplicar Consequência</h6>
+                            <small class="text-muted">Desobediência, birra ou recusa direta.</small>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCriarMassa" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{% url 'rotinas:criar_tarefa_massa' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white"><h5 class="modal-title">Nova Demanda</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body bg-light">
+                    <div class="mb-3"><label class="fw-bold">Tarefa/Rotina</label>{{ form_criar.rotina }}</div>
+                    <div class="mb-3"><label class="fw-bold">Quem?</label>{{ form_criar.usuarios }}</div>
+                    <div class="row"><div class="col-6 mb-3"><label class="fw-bold">Data</label>{{ form_criar.data_tarefa }}</div><div class="col-6 mb-3"><label class="fw-bold">Hora</label>{{ form_criar.prazo_hora }}</div></div>
+                    <div class="mb-3"><label class="fw-bold small text-success">Bônus (Opcional)</label>{{ form_criar.pontos_extra_inicial }}</div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary w-100 fw-bold">Criar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalImportarRotina" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'rotinas:importar_rotina_passada' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-dark text-white"><h5 class="modal-title">Clonar Rotina</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body bg-light">
+                    <div class="mb-3"><label class="fw-bold">Data Origem</label><input type="date" name="data_origem" class="form-control" required></div>
+                    <div class="mb-3"><label class="fw-bold">Usuário</label><select name="usuario_alvo" class="form-select"><option value="todos">Todos</option>{% for u in todos_usuarios %}<option value="{{ u.id }}">{{ u.username }}</option>{% endfor %}</select></div>
+                    <input type="hidden" name="data_destino" value="{{ data_atual }}">
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-dark w-100">Importar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAplicarCastigo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <form action="{% url 'rotinas:aplicar_castigo' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-danger text-white"><h5 class="modal-title">Registrar Punição</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body bg-light">
+                    <div class="mb-3"><label class="fw-bold">Quem?</label>{{ form_castigo.usuario }}</div>
+                    
+                    <div class="row"><div class="col-8 mb-3"><label class="fw-bold">Motivo</label>{{ form_castigo.motivo }}</div><div class="col-4 mb-3"><label class="fw-bold">Gravidade</label>{{ form_castigo.gravidade }}</div></div>
+                    <div class="mb-3"><label class="small fw-bold">Detalhes do Ocorrido</label>{{ form_castigo.descricao_detalhada }}</div>
+                    <div class="row"><div class="col-6 mb-3"><label class="fw-bold text-danger">Pts Perdidos</label>{{ form_castigo.pontos_perdidos }}</div><div class="col-6 mb-3"><label class="fw-bold">Castigo Até</label>{{ form_castigo.data_liberacao }}</div></div>
+                    <div class="form-check">{{ form_castigo.cumprido }} <label>Punição já foi cumprida</label></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-danger w-100 fw-bold">CONFIRMAR PUNIÇÃO</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.URLS_ROTINA = {
+        atualizarStatus: "{% url 'rotinas:atualizar_status_tarefa' 0 %}".replace('0', ''), 
+        adminEditar: "{% url 'rotinas:admin_editar_tarefa' 0 %}".replace('0', ''),
+        ultimoCastigo: "{% url 'rotinas:get_ultimo_castigo' %}"
+    };
+    
+    const scriptTag = document.getElementById('admin-flag');
+    window.IS_ADMIN = scriptTag ? JSON.parse(scriptTag.textContent) : false;
+
+    // === LÓGICA DO JUIZ (DECISÃO) ===
+    let tarefaAtualId = null;
+    let usuarioAtualId = null;
+    let usuarioAtualNome = '';
+    let rotinaAtualNome = '';
+
+    function marcarComoFeito(tarefaId, nomeUsuario) {
+        fetch(window.URLS_ROTINA.atualizarStatus.replace('0', tarefaId) + "?status=CONCLUIDO")
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    const card = document.getElementById(`card-tarefa-${tarefaId}`);
+                    // Remove classes antigas e adiciona sucesso
+                    card.className = "user-audit-item status-concluido";
+                    card.querySelector('.status-text').innerText = "Concluído";
+                    
+                    const Toast = Swal.mixin({toast: true, position: 'top-end', showConfirmButton: false, timer: 2000});
+                    Toast.fire({icon: 'success', title: 'OK!'});
+                }
+            });
+    }
+
+    function abrirDecisao(tarefaId, nomeUsuario, userId, nomeRotina) {
+        tarefaAtualId = tarefaId;
+        usuarioAtualId = userId;
+        usuarioAtualNome = nomeUsuario;
+        rotinaAtualNome = nomeRotina;
+
+        document.getElementById('decisao-titulo').innerText = `${nomeUsuario}: ${nomeRotina}`;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('modalDecisaoAdmin'));
+        myModal.show();
+    }
+
+    function confirmarJustificativa() {
+        Swal.fire({
+            title: 'Qual a justificativa?',
+            input: 'text',
+            inputPlaceholder: 'Ex: Atraso escolar, ajudando em casa...',
+            showCancelButton: true,
+            confirmButtonText: 'Justificar',
+            confirmButtonColor: '#ffc107'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const formData = new FormData();
+                formData.append('status', 'CONCLUIDO'); // Considera feito para fins estatísticos
+                formData.append('observacao_admin', "JUSTIFICADO: " + result.value);
+                formData.append('pontos_extra', 0);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                fetch(window.URLS_ROTINA.adminEditar.replace('0', tarefaAtualId), {
+                    method: 'POST', body: formData
+                }).then(res => res.json()).then(data => {
+                    if(data.success) location.reload();
+                });
+            }
+        });
+    }
+
+    function redirecionarParaCastigo() {
+        // Fecha o modal de decisão
+        const modalDecisao = bootstrap.Modal.getInstance(document.getElementById('modalDecisaoAdmin'));
+        modalDecisao.hide();
+
+        // Abre o Modal de Castigo
+        const modalCastigoEl = document.getElementById('modalAplicarCastigo');
+        const modalCastigo = new bootstrap.Modal(modalCastigoEl);
+        
+        // Preenche dados automaticamente
+        const selectUser = modalCastigoEl.querySelector('select[name="usuario"]');
+        if(selectUser) selectUser.value = usuarioAtualId;
+        
+        const inputMotivo = modalCastigoEl.querySelector('input[name="motivo"]');
+        if(inputMotivo) inputMotivo.value = `Não cumpriu rotina: ${rotinaAtualNome}`;
+
+        modalCastigo.show();
+        
+        // Marca a tarefa como NAO_FEITO (Vermelho) em background
+        fetch(window.URLS_ROTINA.atualizarStatus.replace('0', tarefaAtualId) + "?status=NAO_FEITO");
+    }
+
+    // Inicialização do Select2
+    $(document).ready(function() {
+        $('.select2-user-filter').select2({theme: 'bootstrap-5', placeholder: "Filtrar...", width: '100%'});
+        $('.select2-modal').select2({theme: 'bootstrap-5', dropdownParent: $('#modalCriarMassa'), width: '100%'});
+    });
+</script>
+<script src="{% static 'js/gerenciar_rotinas.js' %}"></script>
+{% endblock %}

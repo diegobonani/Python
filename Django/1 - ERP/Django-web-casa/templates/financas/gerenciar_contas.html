@@ -1,0 +1,184 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block sidebar %}
+    {# Inclui a sidebar correta para o contexto de Gestão #}
+    {% include 'partials/sidebar_admin.html' %}
+{% endblock %}
+
+{% block title %}Gerenciar Contas Financeiras{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid mt-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary"><i class="fas fa-wallet me-2"></i> Gerenciamento de Contas</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdicionarConta">
+            <i class="fas fa-plus me-1"></i> Nova Conta
+        </button>
+    </div>
+
+    {# ALERTA DE MENSAGENS DO DJANGO #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Contas Registradas</h5>
+        </div>
+        <div class="card-body">
+            
+            <div class="table-responsive">
+                <table id="contasTable" class="table table-hover table-striped">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Nome da Conta</th>
+                            <th>Usuário</th>
+                            <th class="text-end">Saldo Inicial (R$)</th>
+                            <th class="text-end">Saldo Atual (R$)</th>
+                            <th>Não Negativo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for conta in contas %}
+                        <tr data-conta-id="{{ conta.pk }}" data-usuario-id="{{ conta.usuario_id }}">
+                            <td>{{ conta.nome }}</td>
+                            <td>{{ conta.usuario.username }}</td>
+                            <td class="text-end">{{ conta.saldo_inicial|floatformat:2 }}</td>
+                            <td class="text-end text-{% if conta.saldo_atual < 0 %}danger{% else %}success{% endif %}">
+                                <strong>{{ conta.saldo_atual|floatformat:2 }}</strong>
+                            </td>
+                            <td>
+                                {% if conta.nao_permite_negativo %}
+                                    <span class="badge bg-danger">Sim</span>
+                                {% else %}
+                                    <span class="badge bg-success">Não</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info btn-editar-conta" data-bs-toggle="modal" data-bs-target="#modalAdicionarConta" data-id="{{ conta.pk }}">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                {# Você precisará de uma view delete: <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button> #}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{# ================================================================= #}
+{#                       MODAL DE ADICIONAR/EDITAR                   #}
+{# ================================================================= #}
+<div class="modal fade" id="modalAdicionarConta" tabindex="-1" aria-labelledby="modalAdicionarContaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            {# A URL de action será definida pelo JavaScript (adicionar ou editar) #}
+            <form id="formContaFinanceira" method="POST" action="{% url 'financas:adicionar_conta' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalAdicionarContaLabel">Nova Conta Financeira</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="conta-form-errors" class="alert alert-danger d-none"></div>
+
+                    {# Renderiza o formulário do Django #}
+                    {{ form.non_field_errors }}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+
+                    <input type="hidden" name="conta_id" id="id_conta_id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarConta">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'js/gerenciar_contas.js' %}" defer></script>
+    <script>
+        // Inicializa o DataTable para a tabela de contas
+        $(document).ready(function() {
+            $('#contasTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+                },
+                "paging": true,
+                "searching": true,
+                "ordering": true,
+                "info": true
+            });
+            
+            // Lógica de Modais (Adicionar/Editar)
+            const modalElement = document.getElementById('modalAdicionarConta');
+            const formContaFinanceira = document.getElementById('formContaFinanceira');
+            const modalTitle = document.getElementById('modalAdicionarContaLabel');
+            const contaIdInput = document.getElementById('id_conta_id');
+            const btnSalvar = document.getElementById('btnSalvarConta');
+
+            modalElement.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const isEdit = button.classList.contains('btn-editar-conta');
+                
+                formContaFinanceira.reset();
+                document.getElementById('conta-form-errors').classList.add('d-none');
+
+                if (isEdit) {
+                    // Modo Edição
+                    const contaId = button.getAttribute('data-id');
+                    modalTitle.textContent = 'Editar Conta Financeira';
+                    btnSalvar.textContent = 'Salvar Alterações';
+                    formContaFinanceira.action = `/financas/contas/editar/${contaId}/`; // URL AJAX de edição
+                    contaIdInput.value = contaId;
+
+                    // Fetch data para preencher o formulário (Você precisará de uma view AJAX get_conta_json)
+                    fetch(`{% url 'financas:get_conta_json' 0 %}`.replace('0', contaId))
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('id_nome').value = data.nome;
+                            document.getElementById('id_saldo_inicial').value = data.saldo_inicial;
+                            document.getElementById('id_usuario').value = data.usuario_id;
+                            document.getElementById('id_nao_permite_negativo').checked = data.nao_permite_negativo;
+                        })
+                        .catch(error => console.error('Erro ao carregar dados da conta:', error));
+                } else {
+                    // Modo Adicionar
+                    modalTitle.textContent = 'Nova Conta Financeira';
+                    btnSalvar.textContent = 'Criar Conta';
+                    formContaFinanceira.action = "{% url 'financas:adicionar_conta' %}"; // URL AJAX de adição
+                    contaIdInput.value = '';
+                }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% load humanize %}
+
+{% if itens_estoque %}
+<div class="table-responsive">
+    <table id="tabela-casa" class="table table-hover align-middle w-100 table-sm text-nowrap">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 15%;">Imóvel</th>          <th style="width: 20%;">Item</th>            <th style="width: 15%;">Cômodo</th>          <th style="width: 15%;">Localização</th>     <th style="width: 10%;">Qtd.</th>            <th style="width: 10%;">Validade</th>        <th class="text-end" style="width: 15%;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hub in itens_estoque %}
+            {% with filho=hub.item_casa %}
+            
+            <tr class="
+                {% if filho.quantidade <= 0 %}tr-status-critico
+                {% elif filho.quantidade <= filho.estoque_minimo %}tr-status-baixo
+                {% elif filho.quantidade >= filho.estoque_ideal %}tr-status-cheio
+                {% else %}tr-status-ok{% endif %}
+            ">
+                
+                <td class="fw-bold text-success">
+                    <i class="fas fa-home me-1"></i> 
+                    {{ filho.comodo.imovel.nome|default:"Sem Cadastro" }}
+                </td>
+
+                <td>
+                    <div class="fw-bold text-dark">{{ filho.nome }}</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        {{ filho.categoria.nome_categoria|default:"-" }}
+                    </small>
+                </td>
+
+                <td>
+                    {{ filho.comodo.nome|default:"-" }}
+                </td>
+
+                <td>
+                    {% if filho.localizacao %}
+                        <i class="fas fa-map-marker-alt text-secondary me-1" style="font-size: 0.7rem;"></i>
+                        {{ filho.localizacao.nome }}
+                    {% else %}
+                        <span class="text-muted small">-</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <span class="fw-bold">{{ filho.quantidade|floatformat:2 }}</span>
+                    <small class="text-muted">{{ filho.unidade.sigla|default:"UN" }}</small>
+                    
+                    {% if filho.quantidade <= 0 %}
+                        <i class="fas fa-circle text-danger ms-1" style="font-size: 0.5rem;" title="Zerado"></i>
+                    {% elif filho.quantidade <= filho.estoque_minimo %}
+                        <i class="fas fa-circle text-warning ms-1" style="font-size: 0.5rem;" title="Baixo"></i>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if filho.validade %}
+                        {% if filho.validade < today %}
+                            <span class="badge bg-danger">Vencido</span>
+                            <div class="small text-danger fw-bold">{{ filho.validade|date:"d/m/y" }}</div>
+                        {% elif filho.validade < today|date:"Y-m-d"|add:"30" %}
+                            <span class="badge bg-warning text-dark">Atenção</span>
+                            <div class="small text-dark">{{ filho.validade|date:"d/m/y" }}</div>
+                        {% else %}
+                            <div class="text-success">{{ filho.validade|date:"d/m/y" }}</div>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted small">-</span>
+                    {% endif %}
+                </td>
+
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary btn-editar-item-casa" data-id="{{ hub.id }}" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        
+                        <button class="btn btn-outline-warning btn-dar-baixa" data-id="{{ hub.id }}" title="Baixa">
+                            <i class="fas fa-minus-circle"></i>
+                        </button>
+                        
+                        <button class="btn btn-outline-danger btn-excluir-item" data-id="{{ hub.id }}" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-light text-center m-3 py-5">
+    <i class="fas fa-home fa-3x mb-3 text-secondary opacity-50"></i>
+    <p class="mb-0 text-muted">Nenhum item de casa encontrado neste imóvel/filtro.</p>
+</div>
+{% endif %}

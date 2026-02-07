@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Gerenciar Estudos{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height: 100vh;">
+    
+    <div class="flex-shrink-0 bg-dark" style="width: 280px;">
+        {% include 'partials/sidebar_admin.html' %}
+    </div>
+
+    <div class="flex-grow-1 bg-light" style="overflow-y: auto; max-height: 100vh;">
+        <div class="container-fluid p-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-0 text-gray-800"><i class="fas fa-graduation-cap me-2 text-info"></i>Gestão de Estudos</h2>
+                    <span class="text-muted small">Acompanhamento de boletins, notas e desempenho escolar.</span>
+                </div>
+                <div class="date-display text-muted bg-white px-3 py-2 rounded shadow-sm border">
+                    <i class="far fa-calendar-alt me-2 text-primary"></i> {% now "d \d\e F \d\e Y" %}
+                </div>
+            </div>
+
+            <div class="card shadow mb-4 border-0">
+                
+                <div class="card-header py-0 bg-white border-bottom-0 pt-3">
+                    <ul class="nav nav-tabs card-header-tabs" id="estudosTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold text-primary" id="boletim-tab" data-bs-toggle="tab" data-bs-target="#boletim" type="button" role="tab">
+                                <i class="fas fa-book-open me-2"></i>Boletim Detalhado
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold text-secondary" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                                <i class="fas fa-chart-line me-2"></i>Dashboard
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body bg-light">
+                    <div class="tab-content" id="estudosTabContent">
+                        
+                        <div class="tab-pane fade show active" id="boletim" role="tabpanel">
+                            
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body p-3">
+                                    <form method="GET" class="row g-2 align-items-end">
+                                        <div class="col-md-6">
+                                            <label for="filtro-usuarios" class="form-label small fw-bold text-muted mb-0">Filtrar por Estudante</label>
+                                            <select name="usuario_id" id="filtro-usuarios" class="form-select form-select-sm">
+                                                <option value="">Ver Todos os Estudantes</option>
+                                                {% for usuario in usuarios_estudando %}
+                                                    <option value="{{ usuario.id }}" {% if usuario.id == usuario_id_filtro %}selected{% endif %}>
+                                                        {{ usuario.username }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">
+                                                <i class="fas fa-filter me-1"></i> Filtrar
+                                            </button>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <a href="{% url 'jornada:gerenciar_estudos' %}" class="btn btn-outline-secondary btn-sm w-100">
+                                                Limpar
+                                            </a>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-success btn-sm w-100 fw-bold shadow-sm">
+                                                <i class="fas fa-plus me-1"></i> Nova Matéria
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {% if not materias_todas %}
+                                <div class="text-center p-5 bg-white rounded border shadow-sm">
+                                    <i class="fas fa-search fa-3x text-muted opacity-25 mb-3"></i>
+                                    <p class="text-muted h6">Nenhum estudante ou matéria encontrada com este filtro.</p>
+                                </div>
+                            {% else %}
+                                <div class="row">
+                                    {% for materia in materias_todas %}
+                                    <div class="col-xl-4 col-lg-6 mb-4">
+                                        <div class="card shadow-sm h-100 border-0">
+                                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="m-0 font-weight-bold text-primary">
+                                                        <i class="fas fa-book me-2"></i>{{ materia.nome }}
+                                                    </h6>
+                                                    <small class="text-muted"><i class="fas fa-user me-1"></i> {{ materia.usuario.username }}</small>
+                                                </div>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li><a class="dropdown-item" href="#"><i class="fas fa-plus me-2"></i>Lançar Nota</a></li>
+                                                        <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Editar Matéria</a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-hover mb-0 align-middle">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th class="ps-3 border-0">Avaliação</th>
+                                                                <th class="border-0">Nota</th>
+                                                                <th class="pe-3 border-0 text-center">Progresso</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for nota in materia.notas.all %}
+                                                            
+                                                            {% widthratio nota.nota_obtida nota.nota_maxima 100 as pct %}
+                                                            
+                                                            <tr>
+                                                                <td class="ps-3 fw-bold text-dark" style="font-size: 0.9rem;">{{ nota.descricao }}</td>
+                                                                <td>
+                                                                    <span class="fw-bold {% if pct|add:'0' < 50 %}text-danger{% elif pct|add:'0' < 70 %}text-warning{% else %}text-success{% endif %}">
+                                                                        {{ nota.nota_obtida|floatformat:"1" }}
+                                                                    </span>
+                                                                    <span class="text-muted small">/ {{ nota.nota_maxima|floatformat:"0" }}</span>
+                                                                </td>
+                                                                <td class="pe-3" style="width: 35%;">
+                                                                    <div class="progress" style="height: 6px;">
+                                                                        <div class="progress-bar {% if pct|add:'0' < 50 %}bg-danger{% elif pct|add:'0' < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+                                                                             role="progressbar" 
+                                                                             style="--w: {{ pct }}%; width: var(--w);" 
+                                                                             aria-valuenow="{{ pct }}" 
+                                                                             aria-valuemin="0" 
+                                                                             aria-valuemax="100"></div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            {% empty %}
+                                                            <tr>
+                                                                <td colspan="3" class="text-center text-muted py-4 small">
+                                                                    Nenhuma nota lançada.
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-light py-2">
+                                                <small class="text-muted">Atualizado recentemente</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="tab-pane fade" id="dashboard" role="tabpanel">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-muted">Média Geral</h5>
+                                            <p class="display-4 fw-bold text-primary">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-muted">Matérias Aprovadas</h5>
+                                            <p class="display-4 fw-bold text-success">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-muted">Em Recuperação</h5>
+                                            <p class="display-4 fw-bold text-warning">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mt-4 text-center">
+                                <i class="fas fa-info-circle me-2"></i> Gráficos de desempenho virão na próxima atualização.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

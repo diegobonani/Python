@@ -1,0 +1,498 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestão Nutricional | Gestão Casa{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Navegação em Pílulas (Abas) */
+    .nav-pills-modern .nav-link {
+        border-radius: 50rem;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        color: #6c757d;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    .nav-pills-modern .nav-link.active {
+        background-color: #198754;
+        color: white;
+        box-shadow: 0 4px 6px rgba(25, 135, 84, 0.25);
+    }
+    .nav-pills-modern .nav-link:hover:not(.active) {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #198754;
+    }
+
+    /* Badges de Macros */
+    .macro-badge {
+        font-size: 0.85rem;
+        padding: 10px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    /* Carrinho */
+    .cart-container {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Efeito Lift no Botão */
+    .btn-hover-lift {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4) !important;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid p-4">
+
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h2 class="fw-bold text-dark mb-1">
+                <i class="fas fa-apple-alt me-2 text-success"></i>Gestão Nutricional
+            </h2>
+            <p class="text-muted mb-0">Controle de cardápio, tabela nutricional e registro diário.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="d-inline-flex align-items-center bg-white px-3 py-2 rounded-pill shadow-sm border">
+                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                    <i class="far fa-calendar-alt"></i>
+                </div>
+                <div>
+                    <small class="text-muted d-block" style="font-size: 0.7rem; line-height: 1;">Hoje</small>
+                    <span class="fw-bold text-dark">{% now "d \d\e F, Y" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center justify-content-between p-3">
+                    <div>
+                        <h6 class="text-muted fw-bold small text-uppercase mb-1">Calorias Hoje</h6>
+                        <h2 class="fw-bold text-dark mb-0" id="dash-cal-consumidas">0</h2>
+                        <small class="text-muted">de <span id="dash-cal-meta">2500</span> kcal</small>
+                    </div>
+                    <div style="width: 80px; height: 80px;">
+                        <canvas id="chartCalorias"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-3">
+                    <h6 class="text-muted fw-bold small text-uppercase mb-3">Distribuição de Macronutrientes</h6>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="fw-bold text-success">Proteínas</span>
+                            <span class="text-muted"><span id="dash-prot-val">0</span>g / 160g</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div id="prog-prot" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="fw-bold text-primary">Carboidratos</span>
+                            <span class="text-muted"><span id="dash-carb-val">0</span>g / 250g</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div id="prog-carb" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="fw-bold text-warning">Gorduras</span>
+                            <span class="text-muted"><span id="dash-gord-val">0</span>g / 70g</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div id="prog-gord" class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="min-height: 70vh;">
+        
+        <div class="card-header bg-white border-bottom py-3 px-4">
+            <ul class="nav nav-pills nav-pills-modern" id="alimentacaoTab" role="tablist">
+                <li class="nav-item me-2" role="presentation">
+                    <button class="nav-link active" id="menu-tab" data-bs-toggle="tab" data-bs-target="#menu-pane" type="button" role="tab">
+                        <i class="fas fa-book-open me-2"></i>Catálogo de Alimentos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="diario-tab" data-bs-toggle="tab" data-bs-target="#diario-pane" type="button" role="tab">
+                        <i class="fas fa-utensils me-2"></i>Diário Alimentar
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body bg-light p-4">
+            <div class="tab-content" id="alimentacaoTabContent">
+                
+                <div class="tab-pane fade show active" id="menu-pane" role="tabpanel">
+                    
+                    <div class="row g-3 mb-4 align-items-center">
+                        <div class="col-md-8">
+                            <div class="btn-group w-100 w-md-auto shadow-sm" role="group">
+                                <input type="radio" class="btn-check js-btn-filtro" name="filtroAlimento" id="btnRadioTodos" value="todos" checked>
+                                <label class="btn btn-outline-secondary px-3" for="btnRadioTodos">Todos</label>
+
+                                <input type="radio" class="btn-check js-btn-filtro" name="filtroAlimento" id="btnRadioSaudavel" value="SAUDAVEL">
+                                <label class="btn btn-outline-success px-3" for="btnRadioSaudavel"><i class="fas fa-leaf me-1"></i>Saudáveis</label>
+
+                                <input type="radio" class="btn-check js-btn-filtro" name="filtroAlimento" id="btnRadioModerado" value="MODERADO">
+                                <label class="btn btn-outline-warning px-3" for="btnRadioModerado"><i class="fas fa-exclamation-triangle me-1"></i>Moderados</label>
+
+                                <input type="radio" class="btn-check js-btn-filtro" name="filtroAlimento" id="btnRadioLixo" value="LIXO">
+                                <label class="btn btn-outline-danger px-3" for="btnRadioLixo"><i class="fas fa-trash-alt me-1"></i>Lixo</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-md-end">
+                            <button class="btn btn-success fw-bold shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalAlimento">
+                                <i class="fas fa-plus me-2"></i>Novo Alimento
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="tabela-alimentos-container" class="bg-white rounded-3 shadow-sm border p-0 overflow-hidden" style="min-height: 300px;">
+                        <div class="d-flex flex-column align-items-center justify-content-center h-100 py-5 text-muted">
+                            <div class="spinner-border text-success mb-3" role="status"></div>
+                            <span>Carregando catálogo...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="diario-pane" role="tabpanel">
+                    
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border gap-3">
+                        <div class="d-flex align-items-center gap-2 w-100 w-md-auto">
+                            <div class="input-group input-group-sm w-100">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="fas fa-filter"></i>
+                                </span>
+                                <select id="filtro-tipo-refeicao" class="form-select border-start-0 ps-0 bg-light fw-bold text-secondary" style="min-width: 180px;">
+                                    <option value="TODOS">Todas as Refeições</option>
+                                    <option value="CAFE">☕ Café da Manhã</option>
+                                    <option value="ALMOCO">🍽️ Almoço</option>
+                                    <option value="JANTA">🍲 Janta</option>
+                                    <option value="LANCHE">🍎 Lanche</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="button" 
+                                id="btnRegistrarHoje"
+                                class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm btn-hover-lift">
+                            <i class="fas fa-plus-circle me-2 fa-lg"></i>Nova Refeição
+                        </button>
+                    </div>
+
+                    <div id="tabela-historico-container" class="bg-transparent" style="min-height: 300px;">
+                        <div class="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <span>Abrindo seu diário...</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAlimento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <form id="formAlimento" method="POST" action="{% url 'alimentacao:salvar_alimento' %}">
+                {% csrf_token %}
+                <input type="hidden" name="alimento_id" id="alimento_id">
+
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-carrot me-2"></i>Dados do Alimento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4 bg-light">
+                    <h6 class="fw-bold text-success mb-3 border-bottom pb-2">Informações Gerais</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold text-muted">Nome do Item</label>
+                            {{ form_alimento.nome }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Classificação</label>
+                            {{ form_alimento.classificacao }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded border mb-3">
+                        <div>
+                            <span class="fw-bold text-dark d-block">Tabela Nutricional Detalhada</span>
+                            <small class="text-muted">Habilite para registrar macros (Proteínas, Carbos, etc).</small>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="incluir_nutricao" id="toggleTabelaNutricional" style="width: 3rem; height: 1.5rem; cursor: pointer;">
+                        </div>
+                    </div>
+
+                    <div id="area-nutricional" class="d-none animate__animated animate__fadeIn">
+                        <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-dark small mb-3">
+                            <i class="fas fa-exclamation-circle me-1"></i> Preencha com base em uma <strong>porção padrão</strong> (ex: 100g ou 1 unidade).
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12 mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-warning text-dark fw-bold border-warning"><i class="fas fa-fire me-2"></i>Calorias (Kcal)</span>
+                                    {{ form_alimento.calorias }}
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="macro-badge">
+                                    <label class="d-block text-success fw-bold small mb-1">Proteínas</label>
+                                    <input type="number" step="0.1" name="proteinas" id="id_proteinas" class="form-control form-control-sm text-center border-success bg-success bg-opacity-10" placeholder="g">
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="macro-badge">
+                                    <label class="d-block text-primary fw-bold small mb-1">Carboidratos</label>
+                                    <input type="number" step="0.1" name="carboidratos" id="id_carboidratos" class="form-control form-control-sm text-center border-primary bg-primary bg-opacity-10" placeholder="g">
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="macro-badge">
+                                    <label class="d-block text-warning fw-bold small mb-1">Gorduras</label>
+                                    <input type="number" step="0.1" name="gorduras_totais" id="id_gorduras_totais" class="form-control form-control-sm text-center border-warning bg-warning bg-opacity-10" placeholder="g">
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="macro-badge">
+                                    <label class="d-block text-info fw-bold small mb-1">Fibras</label>
+                                    <input type="number" step="0.1" name="fibras" id="id_fibras" class="form-control form-control-sm text-center" placeholder="g">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted">Açúcares (g)</label>
+                                <input type="number" step="0.1" name="acucares" id="id_acucares" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted">Sódio (mg)</label>
+                                <input type="number" step="1" name="sodio" id="id_sodio" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light text-muted rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4 rounded-pill shadow-sm">
+                        <i class="fas fa-save me-2"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalRefeicao" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            
+            <form id="formRefeicao" method="POST" action="{% url 'alimentacao:salvar_refeicao' %}">
+                {% csrf_token %}
+                <input type="hidden" name="refeicao_id" id="refeicao_id">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Registrar Refeição</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        
+                        <div class="col-lg-4 bg-light border-end p-4">
+                            <h6 class="fw-bold text-primary mb-3">1. Detalhes</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Atribuído a:</label>
+                                {{ form_refeicao.para_quem }}
+                                <div class="form-text small">
+                                    <i class="fas fa-info-circle me-1"></i> Segure <strong>Ctrl</strong> para selecionar vários (Criação).
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Data</label>
+                                {{ form_refeicao.data }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Tipo de Refeição</label>
+                                {{ form_refeicao.tipo }}
+                            </div>
+                            <hr class="text-muted opacity-25">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted">Complemento / Obs</label>
+                                {{ form_refeicao.descricao_adicional }}
+                                <div class="form-text small">Ex: "Sem molho", "Comi pouco".</div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-8 p-4">
+                            <h6 class="fw-bold text-primary mb-3">2. Composição do Prato</h6>
+
+                            <ul class="nav nav-tabs nav-fill mb-3 border-bottom-0" id="pills-tab" role="tablist">
+                                <li class="nav-item me-1" role="presentation">
+                                    <button class="nav-link active fw-bold small border rounded-top" id="pills-manual-tab" data-bs-toggle="pill" data-bs-target="#pills-manual" type="button" role="tab">
+                                        <i class="fas fa-list-ul me-2"></i>Menu Cadastrado
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link fw-bold small text-success border rounded-top" id="pills-estoque-tab" data-bs-toggle="pill" data-bs-target="#pills-estoque" type="button" role="tab">
+                                        <i class="fas fa-box-open me-2"></i>Baixar do Estoque
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="pills-tabContent">
+                                
+                                <div class="tab-pane fade show active" id="pills-manual" role="tabpanel">
+                                    <div class="bg-white p-3 rounded border shadow-sm">
+                                        <label class="small text-muted mb-2">Selecione itens do seu catálogo:</label>
+                                        {{ form_refeicao.alimentos }}
+                                        <div class="form-text small mt-2"><i class="fas fa-info-circle me-1"></i> Segure <strong>Ctrl</strong> para selecionar vários.</div>
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane fade" id="pills-estoque" role="tabpanel">
+                                    <div class="row g-3 h-100">
+                                        <div class="col-md-7">
+                                            <div class="card border-success h-100 shadow-sm">
+                                                <div class="card-header bg-success text-white py-2">
+                                                    <small class="fw-bold"><i class="fas fa-search me-1"></i>Buscar na Geladeira</small>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="mb-3">
+                                                        <label class="small fw-bold text-muted">Local</label>
+                                                        <select class="form-select form-select-sm" id="select_localizacao_estoque">
+                                                            <option value="">Selecione o local...</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="small fw-bold text-muted">Produto</label>
+                                                        <select class="form-select form-select-sm" id="select_item_estoque" disabled>
+                                                            <option value="">...</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="d-flex align-items-end gap-2">
+                                                        <div class="flex-grow-1">
+                                                            <label class="small fw-bold text-muted">Qtd.</label>
+                                                            <div class="input-group input-group-sm">
+                                                                <input type="number" step="0.01" class="form-control" id="input_qtd_estoque" placeholder="0.00">
+                                                                <span class="input-group-text bg-white text-success fw-bold" id="span_unidade_medida">UN</span>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn btn-success btn-sm fw-bold px-3" id="btn-add-estoque">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mt-2 text-muted small" id="info_saldo_estoque"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-5">
+                                            <div class="cart-container shadow-sm">
+                                                <div class="p-2 border-bottom bg-white rounded-top">
+                                                    <small class="fw-bold text-uppercase text-muted"><i class="fas fa-shopping-basket me-1"></i>Itens Selecionados</small>
+                                                </div>
+                                                <div class="flex-grow-1 p-0 overflow-auto" style="max-height: 200px;">
+                                                    <ul class="list-group list-group-flush small" id="lista_itens_consumo">
+                                                        <li class="list-group-item text-center text-muted py-4 fst-italic" id="aviso_lista_vazia">
+                                                            Nenhum item adicionado.
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <input type="hidden" name="itens_estoque_json" id="itens_estoque_json">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aviso-duplicidade" class="px-4 py-2 bg-warning bg-opacity-10 border-top border-warning d-none">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="text-warning-emphasis small fw-bold">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Você já registrou esta refeição hoje.
+                        </div>
+                        <button type="button" class="btn btn-sm btn-warning fw-bold shadow-sm" id="btn-forcar-registro">
+                            Adicionar Novamente
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" id="btn-salvar-refeicao" class="btn btn-primary fw-bold px-4 rounded-pill shadow-sm">
+                        <i class="fas fa-check-circle me-2"></i>Confirmar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Define as URLs geradas pelo Django em um objeto global
+    window.URLS_ALIMENTACAO = {
+        TABELA_ALIMENTOS: "{% url 'alimentacao:tabela_alimentos_partial' %}",
+        TABELA_HISTORICO: "{% url 'alimentacao:tabela_historico_partial' %}",
+        GET_ALIMENTO_JSON: "{% url 'alimentacao:get_alimento_json' 0 %}", 
+        EXCLUIR_ALIMENTO: "{% url 'alimentacao:excluir_alimento' 0 %}",
+        EXCLUIR_REFEICAO: "{% url 'alimentacao:excluir_refeicao' 0 %}",
+        GET_REFEICAO_JSON: "{% url 'alimentacao:get_refeicao_json' 0 %}",
+        API_LOCAIS: "{% url 'estoque:api_get_locais' %}",
+        API_ITENS: "{% url 'estoque:api_get_itens' 0 %}",
+        API_RESUMO: "{% url 'alimentacao:api_resumo_nutricional' %}",
+        API_CHECK_DUPLICIDADE: "{% url 'alimentacao:api_check_duplicidade' %}" // <--- ADICIONADO
+    };
+</script>
+
+<script src="{% static 'js/gerenciar_alimentacao.js' %}?v=4"></script>
+{% endblock %}

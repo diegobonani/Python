@@ -1,0 +1,62 @@
+{% if not alimentos %}
+    <div class="text-center py-5 text-muted">
+        <i class="fas fa-carrot fa-3x mb-3 opacity-25"></i>
+        <p>Nenhum alimento encontrado com este filtro.</p>
+    </div>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Alimento</th>
+                    <th class="text-center">Classificação</th>
+                    <th class="text-center">Calorias</th>
+                    <th class="text-end pe-4">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alimento in alimentos %}
+                <tr>
+                    <td class="ps-4">
+                        <strong>{{ alimento.nome }}</strong>
+                        {% if alimento.nutricao %}
+                            <small class="d-block text-muted" style="font-size: 0.75rem;">
+                                P:{{ alimento.nutricao.proteinas|default:"0" }}g | 
+                                C:{{ alimento.nutricao.carboidratos|default:"0" }}g | 
+                                G:{{ alimento.nutricao.gorduras_totais|default:"0" }}g
+                            </small>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if alimento.classificacao == 'SAUDAVEL' %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success">Saudável</span>
+                        {% elif alimento.classificacao == 'MODERADO' %}
+                            <span class="badge bg-warning bg-opacity-10 text-dark border border-warning">Moderado</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Lixo</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="fw-bold text-secondary">{{ alimento.calorias }}</span> <small class="text-muted">kcal</small>
+                    </td>
+                    <td class="text-end pe-4">
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-primary border-0 js-btn-editar-alimento" 
+                                data-id="{{ alimento.id }}"
+                                title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-danger border-0 js-btn-excluir-alimento" 
+                                data-id="{{ alimento.id }}"
+                                title="Excluir">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}

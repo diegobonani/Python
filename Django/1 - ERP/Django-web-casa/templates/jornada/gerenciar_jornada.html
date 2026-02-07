@@ -1,0 +1,382 @@
+{% extends "base.html" %} 
+{% load static %}
+{% load i18n %}
+
+{% block title %}Gerenciar Jornadas{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height: 100vh;">
+    
+    <div class="flex-shrink-0 bg-dark" style="width: 280px;">
+        {% include 'partials/sidebar_admin.html' %}
+    </div>
+
+    <div class="flex-grow-1 bg-light" style="overflow-y: auto; max-height: 100vh;">
+        <div class="container-fluid p-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-0 text-gray-800"><i class="fas fa-user-clock me-2 text-primary"></i>Gestão de Jornada</h2>
+                    <span class="text-muted small">Controle de ponto, banco de horas e extras.</span>
+                </div>
+                <div class="date-display text-muted bg-white px-3 py-2 rounded shadow-sm border">
+                    <i class="far fa-calendar-alt me-2 text-primary"></i> {% now "d \d\e F \d\e Y" %}
+                </div>
+            </div>
+
+            <div class="card shadow mb-4 border-0">
+                
+                <div class="card-header py-0 bg-white border-bottom-0 pt-3">
+                    <ul class="nav nav-tabs card-header-tabs" id="jornadaTabs" role="tablist">
+                        
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link fw-bold {% if aba_ativa == 'jornada' %}active text-primary{% else %}text-secondary{% endif %}" 
+                               id="jornada-tab" 
+                               href="?aba=jornada&usuario_id={{ usuario_selecionado_id }}&filtro_tipo={{ filtro_tipo }}&data={{ data_filtro }}&mes={{ mes_filtro }}">
+                               <i class="fas fa-clock me-2"></i>Jornada (Ponto)
+                            </a>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link fw-bold {% if aba_ativa == 'balanco' %}active text-warning{% else %}text-secondary{% endif %}" 
+                               id="balanco-tab" 
+                               href="?aba=balanco&usuario_id={{ usuario_selecionado_id }}&filtro_tipo={{ filtro_tipo }}&data={{ data_filtro }}&mes={{ mes_filtro }}">
+                               <i class="fas fa-boxes me-2"></i>Balanço (Extras)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body bg-light">
+                    
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-body p-3">
+                            <form method="GET" id="form-filtros-jornada" class="row g-2 align-items-end">
+                                <input type="hidden" name="aba" value="{{ aba_ativa }}">
+                                
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted mb-0">Colaborador</label>
+                                    <select name="usuario_id" id="filtro-usuarios" class="form-select form-select-sm">
+                                        {% for usuario in usuarios_trabalhando %}
+                                            <option value="{{ usuario.id }}" {% if usuario.id == usuario_selecionado.id %}selected{% endif %}>
+                                                {{ usuario.username }}
+                                            </option>
+                                        {% empty %}
+                                            <option value="">Nenhum colaborador</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted mb-0">Visualização</label>
+                                    <select name="filtro_tipo" id="filtro-tipo" class="form-select form-select-sm">
+                                        <option value="dia" {% if filtro_tipo == 'dia' %}selected{% endif %}>Dia Específico</option>
+                                        <option value="mes" {% if filtro_tipo == 'mes' %}selected{% endif %}>Mês Completo</option>
+                                        <option value="periodo" {% if filtro_tipo == 'periodo' %}selected{% endif %}>Período</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div id="filtro-dia-container" class="filtro-data-input">
+                                        <label class="form-label small fw-bold text-muted mb-0">Data</label>
+                                        <input type="date" name="data" id="filtro-data" class="form-control form-control-sm" value="{{ data_filtro }}">
+                                    </div>
+                                    <div id="filtro-mes-container" class="filtro-data-input" style="display:none;">
+                                        <label class="form-label small fw-bold text-muted mb-0">Mês/Ano</label>
+                                        <input type="month" name="mes" id="filtro-mes" class="form-control form-control-sm" value="{{ mes_filtro }}">
+                                    </div>
+                                    <div id="filtro-periodo-container" class="filtro-data-input" style="display:none;">
+                                        <label class="form-label small fw-bold text-muted mb-0">Período</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="date" name="data_inicio" id="filtro-data-inicio" class="form-control" value="{{ data_inicio }}">
+                                            <span class="input-group-text p-1">a</span>
+                                            <input type="date" name="data_fim" id="filtro-data-fim" class="form-control" value="{{ data_fim }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-secondary btn-sm w-100 fw-bold">
+                                        <i class="fas fa-filter me-1"></i> Atualizar
+                                    </button>
+                                </div>
+                                <div class="col-md-2">
+                                    {% if aba_ativa == 'jornada' %}
+                                    <button type="button" class="btn btn-primary btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalAdicionarPontoAdmin">
+                                        <i class="fas fa-plus me-1"></i> Nova Jornada
+                                    </button>
+                                    {% else %}
+                                    <button type="button" class="btn btn-warning btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalAdicionarBalancoAdmin">
+                                        <i class="fas fa-plus me-1"></i> Novo Balanço
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="tab-content">
+                        
+                        <div class="tab-pane fade {% if aba_ativa == 'jornada' %}show active{% endif %}" id="tab-jornada">
+                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                                <h6 class="m-0 font-weight-bold text-primary">
+                                    <i class="fas fa-list me-2"></i>Extrato: <span class="text-dark">{{ usuario_selecionado.username|default:"Selecione um usuário" }}</span>
+                                </h6>
+                                <div class="btn-group">
+                                    {% if usuario_selecionado and registros_jornada %}
+                                    <a href="{% url 'jornada:exportar_jornada_csv' %}?{{ request.GET.urlencode }}&aba=jornada" class="btn btn-outline-success btn-sm" title="Exportar CSV"><i class="fas fa-file-excel"></i></a>
+                                    <a href="{% url 'jornada:exportar_jornada_pdf' %}?{{ request.GET.urlencode }}&aba=jornada" class="btn btn-outline-danger btn-sm" title="Exportar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="bg-white border rounded shadow-sm table-responsive" style="max-height: 60vh;">
+                                <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tabelaGerenciarJornada" style="font-size: 0.85rem;">
+                                    <thead class="table-light text-center align-middle sticky-top" style="top: 0; z-index: 10;">
+                                        <tr>
+                                            <th class="text-start ps-3" style="min-width: 100px;">Data</th>
+                                            <th>Tipo</th>
+                                            <th>$/h</th>
+                                            <th>Ent</th>
+                                            <th>S.Alm</th>
+                                            <th>R.Alm</th>
+                                            <th>Sai</th>
+                                            <th class="bg-light">Alm</th>
+                                            <th class="bg-light">Tot</th>
+                                            <th class="bg-light">Ext</th>
+                                            <th class="bg-light text-end">R$</th>
+                                            <th style="min-width: 80px;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-center">
+                                        {% if filtro_tipo == 'dia' and not registros_jornada %}
+                                        <tr class="table-info" id="linha-insercao-rapida-admin">
+                                            <td class="text-start ps-3 fw-bold text-primary">{{ data_filtro|date:"d/m" }}<input type="hidden" id="quick-usuario-admin" value="{{ usuario_selecionado.id }}"></td>
+                                            <td><select id="quick-tipo-dia-admin" class="form-select form-select-sm py-0" style="font-size: 0.8rem;"><option value="NORMAL">Normal</option><option value="SABADO">Sábado</option><option value="FERIADO">Feriado</option><option value="FOLGA">Folga</option></select></td>
+                                            <td class="bg-light"></td>
+                                            <td><input type="time" id="quick-entrada-admin" class="form-control form-control-sm text-center p-0"></td>
+                                            <td><input type="time" id="quick-saida-almoco-admin" class="form-control form-control-sm text-center p-0"></td>
+                                            <td><input type="time" id="quick-retorno-almoco-admin" class="form-control form-control-sm text-center p-0"></td>
+                                            <td><input type="time" id="quick-saida-admin" class="form-control form-control-sm text-center p-0"></td>
+                                            <td class="small bg-light quick-total-almoco">-</td>
+                                            <td class="small fw-bold bg-light quick-total-trabalhado">-</td>
+                                            <td class="small bg-light quick-total-extras">-</td>
+                                            <td class="small bg-light text-end quick-total-receber">-</td>
+                                            <td><button class="btn btn-success btn-sm py-0 px-2" id="btn-salvar-rapido-jornada"><i class="fas fa-check"></i></button></td>
+                                        </tr>
+                                        {% endif %}
+
+                                        {% for registro in registros_jornada %}
+                                        <tr data-registro-id="{{ registro.pk }}" class="{% if registro.tipo_dia == 'ATESTADO' %}table-danger{% elif registro.tipo_dia == 'FOLGA' %}table-info{% endif %}">
+                                            <td class="text-start ps-3 fw-bold text-nowrap">{{ registro.data|date:"d/m - D" }}</td>
+                                            <td><span class="badge rounded-pill {% if registro.tipo_dia == 'NORMAL' %}bg-secondary{% else %}bg-info text-dark{% endif %}">{{ registro.get_tipo_dia_display }}</span></td>
+                                            <td class="text-muted">{{ registro.usuario.perfil.valor_hora|floatformat:"0" }}</td>
+                                            <td>{{ registro.entrada|time:"H:i"|default:"--" }}</td>
+                                            <td>{{ registro.saida_almoco|time:"H:i"|default:"--" }}</td>
+                                            <td>{{ registro.retorno_almoco|time:"H:i"|default:"--" }}</td>
+                                            <td>{{ registro.saida|time:"H:i"|default:"--" }}</td>
+                                            <td class="bg-light text-muted small">{{ registro.horas_almoco|floatformat:2 }}</td>
+                                            <td class="bg-light fw-bold small">{{ registro.horas_trabalhadas|floatformat:2 }}</td>
+                                            <td class="bg-light small">{% if registro.horas_extras > 0 %}<span class="text-success fw-bold">+{{ registro.horas_extras|floatformat:2 }}</span>{% else %}<span class="text-muted">-</span>{% endif %}</td>
+                                            <td class="bg-light text-end text-success fw-bold small">{{ registro.valor_receber|floatformat:"2g" }}</td>
+                                            <td class="text-nowrap">
+                                                <button class="btn btn-link text-primary p-0 me-1 btn-editar-jornada" data-id="{{ registro.pk }}" data-bs-toggle="modal" data-bs-target="#modalEditarPontoAdmin"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-link text-danger p-0 btn-excluir-jornada" data-id="{{ registro.pk }}" data-bs-toggle="modal" data-bs-target="#modalExcluirJornadaAdmin"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        {% if filtro_tipo != 'dia' or filtro_tipo == 'dia' and not registros_jornada %}
+                                            <tr><td colspan="12" class="text-center py-5 text-muted">Nenhum registro encontrado.</td></tr>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                    {% if registros_jornada and filtro_tipo != 'dia' %}
+                                    <tfoot class="sticky-bottom bg-light fw-bold" style="bottom: 0;">
+                                        <tr>
+                                            <td colspan="8" class="text-end">TOTAIS:</td>
+                                            <td class="text-center">{{ soma_horas_trabalhadas|floatformat:2 }}h</td>
+                                            <td class="text-center text-success">+{{ soma_horas_extras|floatformat:2 }}h</td>
+                                            <td class="text-end text-success">R$ {{ soma_valor_receber|floatformat:"2g" }}</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade {% if aba_ativa == 'balanco' %}show active{% endif %}" id="tab-balanco">
+                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                                <h6 class="m-0 font-weight-bold text-warning text-dark small">
+                                    <i class="fas fa-boxes me-2"></i>Balanço: <span class="text-dark">{{ usuario_selecionado.username|default:"Selecione um usuário" }}</span>
+                                </h6>
+                            </div>
+
+                            <div class="bg-white border rounded shadow-sm table-responsive" style="max-height: 60vh;">
+                                <table class="table table-bordered table-hover table-sm mb-0 align-middle" id="tabelaGerenciarBalanco" style="font-size: 0.85rem;">
+                                    <thead class="table-light text-center sticky-top" style="top: 0; z-index: 10;">
+                                        <tr>
+                                            <th class="text-start ps-3" style="min-width: 100px;">Data</th>
+                                            <th>Loja</th>
+                                            <th>Entrada</th>
+                                            <th>Saída</th>
+                                            <th>Anexo</th>
+                                            <th class="bg-light">Total</th>
+                                            <th class="bg-light text-end">R$</th>
+                                            <th style="min-width: 80px;">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-center">
+                                        {% for balanco in registros_balanco %}
+                                        <tr>
+                                            <td class="text-start ps-3 fw-bold text-nowrap">{{ balanco.data|date:"d/m/Y - D" }}</td>
+                                            <td>{{ balanco.loja }}</td>
+                                            <td>{{ balanco.entrada|time:"H:i" }}</td>
+                                            <td>{{ balanco.saida|time:"H:i" }}</td>
+                                            <td>{% if balanco.anexo %}<a href="{{ balanco.anexo.url }}" target="_blank"><i class="fas fa-paperclip"></i></a>{% else %}-{% endif %}</td>
+                                            <td class="bg-light fw-bold">{{ balanco.horas_trabalhadas|floatformat:2 }}</td>
+                                            <td class="bg-light text-end text-success">R$ {{ balanco.valor_receber|floatformat:"2g" }}</td>
+                                            <td>
+                                                <button class="btn btn-link text-primary p-0 me-1 btn-editar-balanco" data-id="{{ balanco.pk }}" data-bs-toggle="modal" data-bs-target="#modalEditarBalancoAdmin"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-link text-danger p-0 btn-excluir-balanco" data-id="{{ balanco.pk }}" data-bs-toggle="modal" data-bs-target="#modalExcluirBalancoAdmin"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                            <tr><td colspan="8" class="text-center py-5 text-muted">Nenhum balanço encontrado.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    {% if registros_balanco %}
+                                    <tfoot class="sticky-bottom bg-light fw-bold" style="bottom: 0;">
+                                        <tr>
+                                            <td colspan="5" class="text-end">TOTAL:</td>
+                                            <td class="text-center">{{ soma_horas_balanco|floatformat:2 }}h</td>
+                                            <td class="text-end text-success">R$ {{ soma_valor_balanco|floatformat:"2g" }}</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                    {% endif %}
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarPontoAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form id="formAdicionarPontoAdmin" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i>Nova Jornada</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">{{ form_admin_jornada.as_p }} <div id="form-errors-add-jornada" class="alert alert-danger mt-3" style="display:none;"></div></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarPontoAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form id="formEditarPontoAdmin" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Jornada</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"><p class="text-center">Carregando...</p></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarBalancoAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form id="formAdicionarBalancoAdmin" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-boxes me-2"></i>Novo Balanço</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">{{ form_admin_balanco.as_p }} <div id="form-errors-add-balanco" class="alert alert-danger mt-3" style="display:none;"></div></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarBalancoAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form id="formEditarBalancoAdmin" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Balanço</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body"><p class="text-center">Carregando...</p></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalExcluirJornadaAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white"><h5 class="modal-title">Excluir?</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">Confirma a exclusão deste registro de Jornada?</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formExcluirJornadaAdmin" method="POST">{% csrf_token %}<button type="submit" class="btn btn-danger">Excluir</button></form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalExcluirBalancoAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white"><h5 class="modal-title">Excluir?</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">Confirma a exclusão deste registro de Balanço?</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formExcluirBalancoAdmin" method="POST">{% csrf_token %}<button type="submit" class="btn btn-danger">Excluir</button></form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // URLs JORNADA
+    window.URL_ADMIN_ADD_PONTO = "{% url 'jornada:admin_registrar_ponto_ajax' %}";
+    window.URL_ADMIN_GET_PONTO = "{% url 'jornada:admin_get_ponto_json' pk=0 %}";
+    window.URL_ADMIN_EDITAR_PONTO = "{% url 'jornada:admin_editar_ponto_ajax' pk=0 %}";
+    window.URL_ADMIN_DELETAR_PONTO = "{% url 'jornada:admin_deletar_ponto_ajax' pk=0 %}";
+    
+    // URLs BALANÇO
+    window.URL_ADMIN_ADD_BALANCO = "{% url 'jornada:admin_registrar_balanco_ajax' %}";
+    window.URL_ADMIN_GET_BALANCO = "{% url 'jornada:admin_get_balanco_json' pk=0 %}";
+    window.URL_ADMIN_EDITAR_BALANCO = "{% url 'jornada:admin_editar_balanco_ajax' pk=0 %}";
+    window.URL_ADMIN_DELETAR_BALANCO = "{% url 'jornada:admin_deletar_balanco_ajax' pk=0 %}";
+
+    window.DATA_FILTRO_ATUAL = "{{ data_filtro }}";
+    
+    // Formulários
+    window.FORM_JORNADA_HTML = '{{ form_admin_jornada.as_p|escapejs }}';
+    window.FORM_BALANCO_HTML = '{{ form_admin_balanco.as_p|escapejs }}';
+</script>
+<script src="{% static 'js/gerenciar_jornada.js' %}"></script>
+{% endblock %}

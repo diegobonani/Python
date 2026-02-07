@@ -1,0 +1,213 @@
+{% extends 'base.html' %} 
+{% load static %}
+
+{% block title %}Controle de Rede (MACs){% endblock %}
+
+{% block style %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        /* Pequenos ajustes para a tabela ficar perfeita */
+        .table td { vertical-align: middle; }
+        .font-monospace { font-family: 'Courier New', Courier, monospace; }
+        .dataTables_filter input { margin-bottom: 10px; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height: 100vh;">
+    
+    <div class="flex-shrink-0 bg-dark" style="width: 280px;">
+        {% include 'partials/sidebar_admin.html' %}
+    </div>
+
+    <div class="flex-grow-1 bg-light" style="overflow-y: auto; max-height: 100vh;">
+        <div class="container-fluid p-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-0 text-gray-800"><i class="fas fa-wifi me-2 text-primary"></i>Controle de Rede</h2>
+                    <span class="text-muted small">Gerenciamento de acesso e bloqueio por MAC Address.</span>
+                </div>
+                <div class="date-display text-muted bg-white px-3 py-2 rounded shadow-sm border">
+                    <i class="far fa-calendar-alt me-2 text-primary"></i> {% now "d \d\e F \d\e Y" %}
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100 bg-white border-start border-4 border-danger">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="text-uppercase fw-bold text-muted small mb-1">Dispositivos Bloqueados</h6>
+                                <h2 class="mb-0 fw-bold text-danger">{{ bloqueados_count }}</h2>
+                            </div>
+                            <div class="bg-danger bg-opacity-10 p-3 rounded-circle">
+                                <i class="fas fa-ban fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm h-100 bg-info bg-opacity-10">
+                        <div class="card-body d-flex align-items-center">
+                            <i class="fas fa-info-circle fa-2x text-info me-3"></i>
+                            <div>
+                                <h6 class="fw-bold text-info mb-1">Gerenciador de Acesso</h6>
+                                <p class="mb-0 small text-muted lh-sm">
+                                    Este painel controla o banco de dados de permissões. O bloqueio efetivo da internet depende da integração do script de firewall (Mikrotik/Linux) com este sistema.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4 border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list me-2"></i>Lista de Dispositivos</h6>
+                    <button class="btn btn-success btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalDispositivo">
+                        <i class="fas fa-plus-circle me-1"></i> Novo Dispositivo
+                    </button>
+                </div>
+                
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="tabela-rede" class="table table-hover align-middle border w-100">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Dispositivo</th>
+                                    <th>MAC Address</th>
+                                    <th class="text-center">Tipo</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in dispositivos %}
+                                <tr class="{% if d.esta_bloqueado %}table-danger{% endif %}">
+                                    <td data-sort="{{ d.usuario.username }}"> 
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2" 
+                                                 style="width:32px; height:32px; font-weight:bold; font-size: 0.8rem;">
+                                                {{ d.usuario.username|slice:":1"|upper }}
+                                            </div>
+                                            <span class="fw-bold text-dark">{{ d.usuario.username|title }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ d.nome }}</span>
+                                        {% if d.castigo_ate %}
+                                            <div class="d-block mt-1">
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">
+                                                    <i class="fas fa-clock me-1"></i> Castigo até: {{ d.castigo_ate|date:"d/m H:i" }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <code class="text-dark fw-bold bg-light px-2 py-1 rounded small border">{{ d.mac_address }}</code>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if d.tipo == 'CELULAR' %}<i class="fas fa-mobile-alt fa-lg text-primary" title="Celular"></i>
+                                        {% elif d.tipo == 'TV' %}<i class="fas fa-tv fa-lg text-dark" title="TV"></i>
+                                        {% elif d.tipo == 'NOTEBOOK' %}<i class="fas fa-laptop fa-lg text-info" title="PC"></i>
+                                        {% elif d.tipo == 'GAME' %}<i class="fas fa-gamepad fa-lg text-success" title="Game"></i>
+                                        {% elif d.tipo == 'IOT' %}<i class="fas fa-lightbulb fa-lg text-warning" title="IoT"></i>
+                                        {% else %}<i class="fas fa-microchip fa-lg text-secondary"></i>{% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if d.esta_bloqueado %}
+                                            <span class="badge bg-danger"><i class="fas fa-lock me-1"></i> BLOQUEADO</span>
+                                        {% else %}
+                                            <span class="badge bg-success"><i class="fas fa-check me-1"></i> LIBERADO</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group shadow-sm">
+                                            <button class="btn btn-sm {% if d.esta_bloqueado %}btn-success{% else %}btn-danger{% endif %} btn-toggle-block" 
+                                                    data-id="{{ d.id }}" 
+                                                    title="{% if d.esta_bloqueado %}Desbloquear{% else %}Bloquear{% endif %}">
+                                                {% if d.esta_bloqueado %}
+                                                    <i class="fas fa-unlock"></i>
+                                                {% else %}
+                                                    <i class="fas fa-ban"></i>
+                                                {% endif %}
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary btn-excluir" data-id="{{ d.id }}" title="Excluir">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDispositivo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formDispositivo" action="{% url 'rede:salvar_dispositivo' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i> Cadastrar Dispositivo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Dono do Dispositivo</label>
+                        {{ form.usuario }}
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label class="form-label fw-bold small text-muted">Nome (Apelido)</label>
+                            {{ form.nome }}
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label fw-bold small text-muted">Tipo</label>
+                            {{ form.tipo }}
+                        </div>
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <label class="form-label fw-bold small text-muted">Endereço MAC</label>
+                        {{ form.mac_address }}
+                        <div class="form-text small">Ex: AA:BB:CC:11:22:33</div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted">Status Inicial</label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted">Castigo Até (Opcional)</label>
+                            {{ form.castigo_ate }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="{% static 'js/gerenciar_rede.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% load static %}
+
+<div id="map-detalhe" class="mb-3 border rounded" style="height: 400px; width: 100%; background-color: #eee;"></div>
+
+<div class="card mb-3 bg-light border-0">
+    <div class="card-body py-2">
+        <div class="row text-center">
+            <div class="col border-end">
+                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Distância</small>
+                <h5 class="text-primary mb-0">{{ dia_deslocamento.km_total_apurado|floatformat:1 }} km</h5>
+            </div>
+            
+            <div class="col border-end">
+                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Consumo</small>
+                <h5 class="text-dark mb-0">{{ consumo_aplicado|floatformat:1 }} km/L</h5>
+            </div>
+
+            <div class="col border-end">
+                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Litros</small>
+                <h5 class="text-warning text-dark mb-0">{{ total_litros|floatformat:2 }} L</h5>
+            </div>
+            
+            <div class="col border-end">
+                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Combustível</small>
+                <h5 class="text-secondary mb-0">{{ dia_deslocamento.get_tipo_combustivel_display }}</h5>
+            </div>
+            
+            <div class="col">
+                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Custo Total</small>
+                <h5 class="text-success mb-0">R$ {{ dia_deslocamento.custo_total_estimado|floatformat:2 }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h6 class="text-primary border-bottom pb-2 mb-3">
+    <i class="fas fa-list-ol me-2"></i> Detalhamento por Trecho
+</h6>
+
+<div class="list-group list-group-flush">
+    {% for p in percursos %}
+    <div class="list-group-item px-0 py-3">
+        <div class="d-flex align-items-start">
+            <div class="me-3 mt-1">
+                <span class="badge bg-secondary rounded-circle" style="width: 24px; height: 24px; line-height: 18px;">{{ p.sequencia }}</span>
+            </div>
+            
+            <div class="flex-grow-1">
+                <div class="mb-1 text-truncate">
+                    <i class="fas fa-dot-circle text-success me-2" style="font-size: 0.8rem;"></i>
+                    <strong class="small">{{ p.origem }}</strong>
+                </div>
+                
+                <div class="ms-1 border-start border-2 ps-3 my-2" style="border-color: #dee2e6 !important;">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="badge bg-light text-dark border fw-normal" title="Distância">
+                            <i class="fas fa-road me-1 text-muted"></i> {{ p.km_trecho }} km
+                        </span>
+                        <span class="badge bg-light text-dark border fw-normal" title="Tempo">
+                            <i class="fas fa-clock me-1 text-muted"></i> {{ p.tempo_trecho_min }} min
+                        </span>
+                        <span class="text-muted small">|</span>
+                        
+                        <span class="badge bg-warning text-dark border fw-normal" title="Litros gastos neste trecho">
+                            <i class="fas fa-gas-pump me-1"></i> {{ p.litros_estimados|floatformat:2 }} L
+                        </span>
+                        <span class="badge bg-success-subtle text-success border border-success fw-bold" title="Custo financeiro deste trecho">
+                            R$ {{ p.custo_estimado|floatformat:2 }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-1 text-truncate">
+                    <i class="fas fa-map-marker-alt text-danger me-2" style="font-size: 0.9rem;"></i>
+                    <strong class="small">{{ p.destino }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center text-muted py-3">
+        Nenhum detalhe de rota encontrado.
+    </div>
+    {% endfor %}
+</div>
+
+{% if dia_deslocamento.observacoes %}
+<div class="alert alert-light border mt-3 mb-0">
+    <strong class="text-dark small"><i class="fas fa-comment-dots me-1"></i> Observações:</strong><br>
+    <span class="text-secondary small">{{ dia_deslocamento.observacoes }}</span>
+</div>
+{% endif %}
+
+<script id="waypoints-data" type="application/json">
+    {{ waypoints_json|safe }}
+</script>

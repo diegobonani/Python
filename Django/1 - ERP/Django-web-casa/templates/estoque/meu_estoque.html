@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Meu Estoque Pessoal{% endblock %}
+
+{% block sidebar %}
+    {% include 'partials/sidebar_usuario.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Meu Estoque Pessoal</h1>
+    <p class="text-muted">Aqui estão todos os itens de estoque registrados em seu nome.</p>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Meus Itens</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="tabelaMeuEstoque" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Categoria</th>
+                            <th>Quantidade</th>
+                            </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in meus_itens_estoque %}
+                            <tr>
+                                <td>{{ item.nome_item }}</td>
+                                <td>{{ item.categoria.nome_categoria|default:"N/A" }}</td>
+                                <td>{{ item.quantidade|floatformat:"0" }}</td>
+                                </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">Você ainda não possui itens cadastrados no seu estoque pessoal.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Você pode adicionar DataTables aqui se quiser
+$(document).ready(function() {
+    $('#tabelaMeuEstoque').DataTable({
+        language: { url: "https://cdn.datatables.net/plug-ins/2.0.8/i18n/pt-BR.json" },
+        "order": [[ 0, "asc" ]] // Ordenar por nome
+    });
+});
+</script>
+{% endblock %}

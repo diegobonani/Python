@@ -1,0 +1,48 @@
+<div class="accordion accordion-flush" id="accordionPlayer">
+    {% for item in estrutura %}
+    <div class="accordion-item bg-transparent border-bottom border-secondary">
+        <h2 class="accordion-header">
+            <button class="accordion-button {% if item.modulo.id != aula_atual.modulo.id %}collapsed{% endif %} bg-dark text-white shadow-none" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#mod-player-{{ item.modulo.id }}">
+                <div class="d-flex flex-column text-start">
+                    <span class="small text-muted text-uppercase" style="font-size: 0.7rem;">Módulo {{ item.modulo.ordem }}</span>
+                    <span class="fw-bold" style="font-size: 0.9rem;">{{ item.modulo.titulo }}</span>
+                </div>
+            </button>
+        </h2>
+        <div id="mod-player-{{ item.modulo.id }}" 
+             class="accordion-collapse collapse {% if item.modulo.id == aula_atual.modulo.id %}show{% endif %}" 
+             data-bs-parent="#accordionPlayer">
+            <div class="accordion-body p-0 bg-secondary bg-opacity-10">
+                {% for aula_info in item.aulas %}
+                <a href="#" 
+                   onclick="carregarDadosAula('{{ aula_info.aula.id }}'); return false;"
+                   class="d-flex align-items-center p-3 text-decoration-none border-bottom border-secondary border-opacity-25 lesson-item 
+                          {% if aula_info.aula.id == aula_atual.id %}active-lesson bg-primary bg-opacity-25 text-white border-start border-4 border-primary{% else %}text-light opacity-75{% endif %}">
+                    
+                    <div style="width: 25px;">
+                        {% if aula_info.aula.id == aula_atual.id %}
+                            <i class="fas fa-play-circle text-primary"></i>
+                        {% elif aula_info.visto %}
+                            <i class="fas fa-check-circle text-success"></i>
+                        {% else %}
+                            <i class="far fa-circle text-muted"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="ms-2 w-100">
+                        <div class="small fw-bold">{{ aula_info.aula.ordem }}. {{ aula_info.aula.titulo }}</div>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span class="badge bg-dark text-secondary" style="font-size: 0.6rem;">VIDEO</span>
+                            <span class="small text-muted" style="font-size: 0.7rem;">{{ aula_info.aula.duracao|default:"--" }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

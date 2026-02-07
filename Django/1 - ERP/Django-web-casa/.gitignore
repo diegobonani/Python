@@ -1,0 +1,25 @@
+# --- Python e Django ---
+__pycache__/
+*.pyc
+db.sqlite3
+.DS_Store
+Thumbs.db
+
+# --- Ambiente Virtual e Logs ---
+venv/
+env/
+*.log
+
+# --- Mídia (Arquivos Pesados) ---
+media/
+static/staticfiles/
+
+# --- SEGURANÇA MÁXIMA (Dados Pessoais e Credenciais) ---
+*.session
+*.session-journal
+*.sql
+*.csv
+.env
+
+# --- Executáveis ---
+*.exe

@@ -1,0 +1,377 @@
+{% load humanize %}
+{% load static %}
+
+<style>
+    .card-dashboard { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); transition: all 0.2s; }
+    .card-dashboard:hover { box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); }
+    
+    /* Cores e bordas dos alertas */
+    .validade-item { border-left: 4px solid transparent; background-color: #fff; margin-bottom: 8px; border-radius: 4px; }
+    .validade-vencido { border-left-color: #dc3545; background-color: #fff5f5; }
+    .validade-atencao { border-left-color: #ffc107; background-color: #fffff0; }
+    
+    .icon-box { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+</style>
+
+<div class="row g-4">
+    
+    <div class="col-lg-5 d-flex flex-column gap-4">
+
+        <div class="card card-dashboard h-auto">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-warning bg-opacity-10 text-warning me-3">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark">Monitoramento de Validade</h6>
+                        <small class="text-muted">Itens vencidos ou a vencer em 30 dias</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if itens_vencidos or itens_proximos %}
+                    <div class="list-group list-group-flush p-2">
+                        
+                        {% for item in itens_vencidos %}
+                        <div class="list-group-item validade-item validade-vencido border-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold text-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> {{ item.nome }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        Venceu em: <strong>{{ item.validade|date:"d/m/Y" }}</strong>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-danger">Vencido</span>
+                                    <div class="small text-danger fw-bold mt-1">há {{ item.dias_para_vencer|stringformat:"d"|slice:"1:" }} dias</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% for item in itens_proximos %}
+                        <div class="list-group-item validade-item validade-atencao border-0 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold text-dark">{{ item.nome }}</div>
+                                    <div class="small text-muted">
+                                        Vence em: <strong>{{ item.validade|date:"d/m/Y" }}</strong>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-warning text-dark">Atenção</span>
+                                    <div class="small fw-bold text-warning-emphasis mt-1">Faltam {{ item.dias_para_vencer }} dias</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle fa-3x text-success opacity-50 mb-3"></i>
+                        <h6 class="fw-bold text-success">Validade em dia!</h6>
+                        <p class="mb-0 small text-muted">Nenhum item vencido ou próximo do vencimento.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card card-dashboard flex-fill">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-danger bg-opacity-10 text-danger me-3">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark">Alertas de Estoque</h6>
+                        <small class="text-muted">Sugestões de compra automática</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                {% if sugestoes_por_local %}
+                    <div class="accordion accordion-flush" id="accordionAlertas">
+                        {% for local, itens in sugestoes_por_local.items %}
+                            <div class="accordion-item border-0">
+                                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                    <button class="accordion-button collapsed py-3 bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
+                                        <span class="badge bg-danger rounded-pill me-2">{{ itens|length }}</span> 
+                                        <span class="fw-semibold text-dark">{{ local }}</span>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionAlertas">
+                                    <div class="accordion-body p-0">
+                                        <ul class="list-group list-group-flush">
+                                            {% for item in itens %}
+                                                <li class="list-group-item py-3">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <div class="fw-bold text-dark small">{{ item.nome }}</div>
+                                                            <div class="d-flex align-items-center mt-1" style="font-size: 0.75rem;">
+                                                                <span class="text-muted me-2">Atual: <b class="text-danger">{{ item.atual|floatformat:1 }}</b></span>
+                                                                <span class="text-muted">Min: {{ item.minimo|floatformat:1 }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle">
+                                                                + {{ item.sugestao_compra|floatformat:1 }} {{ item.unidade }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="d-flex flex-column align-items-center justify-content-center py-5">
+                        <div class="mb-2 text-success opacity-50"><i class="fas fa-thumbs-up fa-3x"></i></div>
+                        <p class="text-muted small mb-0">Estoque 100% abastecido!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card card-dashboard h-100">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary me-3">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-primary">Lista de Reposição</h6>
+                        <small class="text-muted">Itens solicitados manualmente</small>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalNovoItemCatalogo">
+                    <i class="fas fa-plus"></i> Novo Item
+                </button>
+            </div>
+
+            <div class="card-body">
+                <div class="bg-light bg-opacity-50 p-3 rounded-3 border mb-4">
+                    <form id="formAdicionarFaltante" action="{% url 'estoque:adicionar_item_faltante' %}" method="post">
+                        {% csrf_token %}
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-3">
+                                <label class="small text-muted fw-bold">Setor</label>
+                                {{ form_faltante.setor_destino }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small text-muted fw-bold" id="label-destinatario">Destino</label>
+                                <select name="destinatarios" id="id_destinatarios" class="form-select form-select-sm" multiple disabled></select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="small text-muted fw-bold">Item</label>
+                                {{ form_faltante.item_catalogo }}
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-4 col-md-3">
+                                <label class="small text-muted fw-bold">Qtd</label>
+                                {{ form_faltante.quantidade }}
+                            </div>
+                            <div class="col-4 col-md-3" id="wrapper-unidade">
+                                <label class="small text-muted fw-bold">Unid.</label>
+                                {{ form_faltante.unidade }}
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <label class="small text-muted fw-bold">Urgência</label>
+                                {{ form_faltante.prioridade }}
+                            </div>
+                            <div class="col-12 col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" id="btn-submit-faltante">
+                                    <i class="fas fa-save me-1"></i> Adicionar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="collapse" id="collapseObs">
+                             <div class="mt-2">
+                                {{ form_faltante.observacao }}
+                             </div>
+                        </div>
+                        <div class="text-center mt-1">
+                             <a class="small text-decoration-none text-muted" data-bs-toggle="collapse" href="#collapseObs" role="button">
+                                <i class="fas fa-comment-alt me-1"></i> Adicionar Observação
+                             </a>
+                        </div>
+                        <div class="alert alert-danger d-none mt-2 small p-2" id="faltante-error"></div>
+                    </form>
+                </div>
+
+                <h6 class="small text-uppercase text-muted fw-bold mb-3 ps-2 border-start border-4 border-primary">Itens na Fila</h6>
+                
+                {% if itens_faltantes_marcados %}
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light small text-muted">
+                                <tr>
+                                    <th>Prio.</th>
+                                    <th>Item / Detalhes</th>
+                                    <th>Solicitante</th>
+                                    <th class="text-end">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in itens_faltantes_marcados %}
+                                <tr>
+                                    <td style="width: 50px;">
+                                        {% if item.prioridade == 3 %}
+                                            <span class="badge bg-danger rounded-circle p-2" title="Urgente"> </span>
+                                        {% elif item.prioridade == 2 %}
+                                            <span class="badge bg-warning rounded-circle p-2" title="Média"> </span>
+                                        {% else %}
+                                            <span class="badge bg-success rounded-circle p-2" title="Baixa"> </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ item.item_catalogo.nome }}</div>
+                                        <div class="small text-muted">
+                                            Qtd: <strong>{{ item.quantidade|floatformat:0 }}</strong> {{ item.unidade.sigla }}
+                                            {% if item.observacao %}
+                                            <span class="fst-italic text-secondary ms-1">"{{ item.observacao }}"</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if item.usuario %}
+                                            <div class="d-flex align-items-center small text-primary">
+                                                <i class="fas fa-user-circle me-1"></i> {{ item.usuario.username }}
+                                            </div>
+                                        {% elif item.pet %}
+                                            <div class="d-flex align-items-center small text-success">
+                                                <i class="fas fa-paw me-1"></i> {{ item.pet.nome_pet }}
+                                            </div>
+                                        {% elif item.localizacao %}
+                                            <div class="d-flex align-items-center small text-secondary">
+                                                <i class="fas fa-map-marker-alt me-1"></i> {{ item.localizacao.nome }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-light text-danger btn-remover-faltante" data-id="{{ item.id }}" title="Remover">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 border rounded-3 bg-light bg-opacity-25 dashed-border">
+                        <i class="fas fa-shopping-basket text-muted opacity-25 fa-3x mb-3"></i>
+                        <h6 class="text-muted">Lista vazia</h6>
+                        <small class="text-muted">Use o formulário acima para adicionar itens.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const setorSelect = document.getElementById('id_setor_destino');
+        const unidadeSelect = document.getElementById('id_unidade');
+        const qtdInput = document.getElementById('id_quantidade');
+        const wrapperUnidade = document.getElementById('wrapper-unidade');
+        const destSelect = document.getElementById('id_destinatarios');
+        const itemSelect = document.getElementById('id_item_catalogo');
+        const labelDest = document.getElementById('label-destinatario');
+        const btnSubmit = document.getElementById('btn-submit-faltante');
+        
+        // Inicialização do Select2
+        if ($('#id_item_catalogo').length) {
+            $('#id_item_catalogo').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Busque o item...',
+                dropdownParent: $('#simulacao-container')
+            });
+        }
+
+        if ($('#id_destinatarios').length) {
+            $('#id_destinatarios').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Selecione...',
+                allowClear: true
+            });
+        }
+
+        if(setorSelect) {
+            setorSelect.addEventListener('change', function() {
+                handleSectorChange(this.value);
+            });
+            if(setorSelect.value) handleSectorChange(setorSelect.value);
+        }
+
+        function handleSectorChange(setor) {
+            if(labelDest) {
+                if(setor === 'USUARIO') labelDest.innerText = "Quem?";
+                else if(setor === 'PET') labelDest.innerText = "Pet?";
+                else labelDest.innerText = "Local?";
+            }
+
+            if (setor === 'USUARIO') {
+                if(wrapperUnidade) wrapperUnidade.style.display = 'none';
+                if(qtdInput) qtdInput.setAttribute('step', '1');
+            } else {
+                if(wrapperUnidade) wrapperUnidade.style.display = 'block';
+                if(qtdInput) qtdInput.setAttribute('step', '0.001');
+            }
+        }
+
+        // AJAX Submit
+        if(btnSubmit) {
+            const form = document.getElementById('formAdicionarFaltante');
+            const newBtn = btnSubmit.cloneNode(true);
+            btnSubmit.parentNode.replaceChild(newBtn, btnSubmit);
+
+            newBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if(!form.checkValidity()) { form.reportValidity(); return; }
+
+                const formData = new FormData(form);
+                const errorDiv = document.getElementById('faltante-error');
+                
+                newBtn.disabled = true;
+                newBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                errorDiv.classList.add('d-none');
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if(data.success) {
+                        $('#simulacao-container').load('{% url "estoque:aba_simulacao_partial" %}');
+                        if(window.Utils && window.Utils.showToast) window.Utils.showToast("Item adicionado!");
+                    } else {
+                        throw new Error(data.message || "Erro ao salvar.");
+                    }
+                })
+                .catch(err => {
+                    errorDiv.innerText = err.message;
+                    errorDiv.classList.remove('d-none');
+                    newBtn.disabled = false;
+                    newBtn.innerHTML = '<i class="fas fa-save"></i> Adicionar';
+                });
+            });
+        }
+    })();
+</script>

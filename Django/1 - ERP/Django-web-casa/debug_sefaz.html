@@ -1,0 +1,1651 @@
+
+
+<!DOCTYPE html>
+<html lang="pt-br" dir="ltr">
+<head id="Head"><title>
+	Consulta Resumida NFC-e - Secretaria da Fazenda - Governo do Estado de São Paulo
+</title><meta charset="utf-8" /><meta name="viewport" content="width=device-width,&#32;initial-scale=1" /><meta http-equiv="X-UA-Compatible" content="IE=9,&#32;IE=edge" /><meta name="format-detection" content="telephone=no" />
+    <script src="../Xsl/nfce_rj_v2.05/js/jquery.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $('body').hide();
+            $('.ui-filterable input').placeholder();
+            ExibirImagemCancelada();
+            ExibirImagemDenegada();
+            setTimeout(AjustarExibicaoEPEC, 200);
+            setTimeout(function () {
+                $('body').show()
+            }, 400);
+        });
+
+        $(window).resize(function () {
+            setTimeout(AjustarExibicaoEPEC, 300);
+            $('body').hide();
+            setTimeout(function () {
+                $('body').show()
+            }, 400);
+        });
+    </script>
+
+    <script src="../Xsl/nfce_rj_v2.05/js/index.js"></script>
+    <script src="../Xsl/nfce_rj_v2.05/js/jquery.mobile-1.4.5.min.js"></script>
+    <script src="../Xsl/nfce_rj_v1.00/js/jquery.placeholder.min.js"></script>
+    <link rel="stylesheet" media="all" href="../Xsl/nfce_rj_v2.05/css/jquery.mobile-1.4.5.min.css" type="text/css" /><link rel="stylesheet" media="all" href="../Xsl/nfce_rj_v2.05/css/nfceMob.css" type="text/css" /><link rel="stylesheet" media="all" href="../Xsl/nfce_rj_v2.05/css/nfceMob_ie.css" type="text/css" /><link rel="stylesheet" media="all" href="../Content/botoes.css" type="text/css" />
+    <style>
+        .msgErro {
+            font-size: 80%;
+            font-weight: bold;
+            color: Red;
+        }
+
+        .BotoesResponsivos input:first-child {
+            margin-left: 2px;
+        }
+
+        #erro {
+            margin-top:250px;
+        }
+
+        @media print {
+            .naoImprimir {
+                display: none;
+                visibility: hidden;
+            }
+            #erro {
+                max-height:none !important;
+            }
+            body {
+                height:99% !important;
+            }
+        }
+    </style>
+</head>
+<body >
+    <form method="post" action="ConsultaResponsiva/ConsultaResumidaRJFrame_v400.aspx" id="ctl00">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="nDkQ2I/TrA5G2+6U60aGuoRGs+/DGC/NwYWaxJNkf3HniItSk9wWnpW2TlQ1JY9HwAS6usjMUKmOjZjdT9J7yyMglgCRZc5rOlIL5yAYO8xwvoDahFLUSjEPzc7BDiOLQQbi3tzFjoWFf7DCi7pTKKl+RbuVcrLgFSa+Muz/Dqx56tqPAGLONrhSFkY/mB1nHOUWlyp6h3qYiRTr48KM0311rlr0+mU/YfrEo91fCWs=" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['ctl00'];
+if (!theForm) {
+    theForm = document.ctl00;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+        <div style="width: 100%; max-width: 510px; margin: 10px auto;">
+            
+            
+            
+            <div data-role="page" style="position: relative;">
+                <div data-role="header" xmlns:n="http://www.portalfiscal.inf.br/nfe" xmlns:chave="http://exslt.org/chaveacesso" xmlns:r="http://www.serpro.gov.br/nfe/remessanfe.xsd">
+  <h1 class="tit">
+    <img src="../Xsl/nfce_rj_v2.05/imagens/logoNFCe.png" width="90" height="64" alt="NFC-e">
+    <p>DOCUMENTO AUXILIAR DA NOTA FISCAL DE CONSUMIDOR ELETRÔNICA</p>
+    <p>
+    </p>
+  </h1>
+</div>
+<div data-role="content" xmlns:n="http://www.portalfiscal.inf.br/nfe" xmlns:chave="http://exslt.org/chaveacesso" xmlns:r="http://www.serpro.gov.br/nfe/remessanfe.xsd">
+  <div id="conteudo">
+    <div id="avisos">
+    </div>
+    <div class="txtCenter">
+      <div id="u20" class="txtTopo">TENDA ATACADO LTDA (TAUBATE)</div>
+      <div class="text">
+								CNPJ:
+								01.157.555/0017-71</div>
+      <div class="text">Avenida Charles Schnneider
+							,
+							850
+							,
+							
+							,
+							PARQUE SENHOR DO BONFIM
+							,
+							TAUBATE
+							,
+							SP</div>
+    </div>
+    <table border="0" align="center" cellpadding="0" cellspacing="0" id="tabResult" data-filter="true">
+      <tr id="Item + 1">
+        <td valign="top">
+          <span class="txtTit">(F) IOG NATURAL NESTLE DESNATADO 160g</span>
+          <span class="RCod">
+										(Código:
+										981396
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>3</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,75</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">5,25</span></td>
+      </tr>
+      <tr id="Item + 2">
+        <td valign="top">
+          <span class="txtTit">(F) IOG LIQUIDO DANONE VIT FRUTAS 1250g</span>
+          <span class="RCod">
+										(Código:
+										943362
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>3</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										7,93</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">23,79</span></td>
+      </tr>
+      <tr id="Item + 3">
+        <td valign="top">
+          <span class="txtTit">LEITE VEG TAL CASTANHA AMENDOA 1L</span>
+          <span class="RCod">
+										(Código:
+										982020
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>3</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										17,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">53,97</span></td>
+      </tr>
+      <tr id="Item + 4">
+        <td valign="top">
+          <span class="txtTit">REFRI XERETA MACA 2L</span>
+          <span class="RCod">
+										(Código:
+										908660
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>GA</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">5,98</span></td>
+      </tr>
+      <tr id="Item + 5">
+        <td valign="top">
+          <span class="txtTit">APP1 PAO QUEIJO CONG TOP TRAD 1KG</span>
+          <span class="RCod">
+										(Código:
+										937356
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>PT</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										9,9</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">9,90</span></td>
+      </tr>
+      <tr id="Item + 6">
+        <td valign="top">
+          <span class="txtTit">PETIT SUISSE ELEGE MORANGO 320g</span>
+          <span class="RCod">
+										(Código:
+										978216
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>BD</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										8,59</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">8,59</span></td>
+      </tr>
+      <tr id="Item + 7">
+        <td valign="top">
+          <span class="txtTit">BISC CHOC BISCUIT BAUDUCCO COB AO LT 80G</span>
+          <span class="RCod">
+										(Código:
+										981930
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										5,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">11,98</span></td>
+      </tr>
+      <tr id="Item + 8">
+        <td valign="top">
+          <span class="txtTit">MARG DUALIS C SAL 500G</span>
+          <span class="RCod">
+										(Código:
+										935150
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,55</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">3,55</span></td>
+      </tr>
+      <tr id="Item + 9">
+        <td valign="top">
+          <span class="txtTit">MORTADELA TUB PERDIGAO MISTA 400G</span>
+          <span class="RCod">
+										(Código:
+										951615
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,93</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">7,86</span></td>
+      </tr>
+      <tr id="Item + 10">
+        <td valign="top">
+          <span class="txtTit">MINGAU NUTRIBOM MULTICEREAIS SCH 600g</span>
+          <span class="RCod">
+										(Código:
+										944374
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										13,45</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">13,45</span></td>
+      </tr>
+      <tr id="Item + 11">
+        <td valign="top">
+          <span class="txtTit">APP1 BISC CREAM CRACKER RANCHEIRO 300g</span>
+          <span class="RCod">
+										(Código:
+										938882
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>4</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,29</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">13,16</span></td>
+      </tr>
+      <tr id="Item + 12">
+        <td valign="top">
+          <span class="txtTit">CHA REAL CIDREIRA 10 SAQ 10g</span>
+          <span class="RCod">
+										(Código:
+										959681
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">3,89</span></td>
+      </tr>
+      <tr id="Item + 13">
+        <td valign="top">
+          <span class="txtTit">CHA REAL ERVA DOCE 10 SAQ 15g</span>
+          <span class="RCod">
+										(Código:
+										139394
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,29</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">2,29</span></td>
+      </tr>
+      <tr id="Item + 14">
+        <td valign="top">
+          <span class="txtTit">CHA REAL CAMOMILA 10 SAQ 10g</span>
+          <span class="RCod">
+										(Código:
+										124559
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">3,89</span></td>
+      </tr>
+      <tr id="Item + 15">
+        <td valign="top">
+          <span class="txtTit">*K* BISC COOKIES RANCHEIRO GOTAS CHOC 60G</span>
+          <span class="RCod">
+										(Código:
+										944960
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>6</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,85</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">11,10</span></td>
+      </tr>
+      <tr id="Item + 16">
+        <td valign="top">
+          <span class="txtTit">APP1 BISC CREAM CRACKER RANCHEIRO 300g</span>
+          <span class="RCod">
+										(Código:
+										938882
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,29</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">6,58</span></td>
+      </tr>
+      <tr id="Item + 17">
+        <td valign="top">
+          <span class="txtTit">IOG GREGO PENSE ZERO TRAD 100g</span>
+          <span class="RCod">
+										(Código:
+										943017
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,29</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">6,58</span></td>
+      </tr>
+      <tr id="Item + 18">
+        <td valign="top">
+          <span class="txtTit">ACHOC PO NESCAU 990g</span>
+          <span class="RCod">
+										(Código:
+										946032
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										21,9</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">21,90</span></td>
+      </tr>
+      <tr id="Item + 19">
+        <td valign="top">
+          <span class="txtTit">EMP CONG EMPANITOS LAR 1,5KG</span>
+          <span class="RCod">
+										(Código:
+										975053
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										22,9</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">22,90</span></td>
+      </tr>
+      <tr id="Item + 20">
+        <td valign="top">
+          <span class="txtTit">BEB LACTEA COLONIA HOLANDESA CHOC 200ml</span>
+          <span class="RCod">
+										(Código:
+										943226
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>CX</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										24,03</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">24,03</span></td>
+      </tr>
+      <tr id="Item + 21">
+        <td valign="top">
+          <span class="txtTit">CAFE MOIDO 3 CORACOES TRAD ALMOF 500g</span>
+          <span class="RCod">
+										(Código:
+										968826
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										26,49</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">26,49</span></td>
+      </tr>
+      <tr id="Item + 22">
+        <td valign="top">
+          <span class="txtTit">SALGAD LUCKY FOFURA QUEIJO 60g</span>
+          <span class="RCod">
+										(Código:
+										942693
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">1,99</span></td>
+      </tr>
+      <tr id="Item + 23">
+        <td valign="top">
+          <span class="txtTit">CEREAL KELLOGGS SUCRILHOS LV800PG690g</span>
+          <span class="RCod">
+										(Código:
+										947989
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										21,25</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">21,25</span></td>
+      </tr>
+      <tr id="Item + 24">
+        <td valign="top">
+          <span class="txtTit">SALGAD LUCKY FOFURA PRESUNTO 60g</span>
+          <span class="RCod">
+										(Código:
+										942691
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">1,99</span></td>
+      </tr>
+      <tr id="Item + 25">
+        <td valign="top">
+          <span class="txtTit">BISC MAIZENA MARILAN 300g</span>
+          <span class="RCod">
+										(Código:
+										948241
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										5,85</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">11,70</span></td>
+      </tr>
+      <tr id="Item + 26">
+        <td valign="top">
+          <span class="txtTit">APP1 TOALHA UMED TURMA DA CEGONHA 140un</span>
+          <span class="RCod">
+										(Código:
+										947254
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										8,5</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">8,50</span></td>
+      </tr>
+      <tr id="Item + 27">
+        <td valign="top">
+          <span class="txtTit">APP1 TOALHA UMED TURMA DA CEGONHA 140un</span>
+          <span class="RCod">
+										(Código:
+										947254
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										8,5</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">8,50</span></td>
+      </tr>
+      <tr id="Item + 28">
+        <td valign="top">
+          <span class="txtTit">APP1 SH ABOVE MASC ANTICASP MENTOL 325ml</span>
+          <span class="RCod">
+										(Código:
+										941392
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										12,9</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">12,90</span></td>
+      </tr>
+      <tr id="Item + 29">
+        <td valign="top">
+          <span class="txtTit">*K* BISC RECH PASSATEMPO AVELA FININHO 57g</span>
+          <span class="RCod">
+										(Código:
+										942558
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>4</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,05</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">8,20</span></td>
+      </tr>
+      <tr id="Item + 30">
+        <td valign="top">
+          <span class="txtTit">KIT INF SH CONDIC BARUEL SUA 400ML 210ML</span>
+          <span class="RCod">
+										(Código:
+										958185
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>CJ</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										21,55</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">21,55</span></td>
+      </tr>
+      <tr id="Item + 31">
+        <td valign="top">
+          <span class="txtTit">FILTRO PAPEL BRIGITTA 102 30UN</span>
+          <span class="RCod">
+										(Código:
+										974569
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>PT</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,5</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">3,50</span></td>
+      </tr>
+      <tr id="Item + 32">
+        <td valign="top">
+          <span class="txtTit">MIST BOLO RENATA BROWNIE 400g</span>
+          <span class="RCod">
+										(Código:
+										939543
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										5,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">5,89</span></td>
+      </tr>
+      <tr id="Item + 33">
+        <td valign="top">
+          <span class="txtTit">MIST BOLO RENATA LARANJA 400g</span>
+          <span class="RCod">
+										(Código:
+										976074
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>PT</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										5,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">5,89</span></td>
+      </tr>
+      <tr id="Item + 34">
+        <td valign="top">
+          <span class="txtTit">APP1 MAC OVOS CAMIL PARAFUSO 500g</span>
+          <span class="RCod">
+										(Código:
+										943338
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">2,89</span></td>
+      </tr>
+      <tr id="Item + 35">
+        <td valign="top">
+          <span class="txtTit">BISNAGUINHA KIM TRADICIONAL 300g</span>
+          <span class="RCod">
+										(Código:
+										901996
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>PT</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										4,95</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">4,95</span></td>
+      </tr>
+      <tr id="Item + 36">
+        <td valign="top">
+          <span class="txtTit">APP1 MAC OVOS CAMIL PARAFUSO 500g</span>
+          <span class="RCod">
+										(Código:
+										943338
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">2,89</span></td>
+      </tr>
+      <tr id="Item + 37">
+        <td valign="top">
+          <span class="txtTit">APP1 MAC OVOS CAMIL PARAFUSO 500g</span>
+          <span class="RCod">
+										(Código:
+										943338
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">2,89</span></td>
+      </tr>
+      <tr id="Item + 38">
+        <td valign="top">
+          <span class="txtTit">MIST BOLO ITALAC LIMAO 400g</span>
+          <span class="RCod">
+										(Código:
+										999304
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										4,75</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">4,75</span></td>
+      </tr>
+      <tr id="Item + 39">
+        <td valign="top">
+          <span class="txtTit">SALGAD LUCKY FOFURA CHURRASCO 60g</span>
+          <span class="RCod">
+										(Código:
+										942695
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">1,99</span></td>
+      </tr>
+      <tr id="Item + 40">
+        <td valign="top">
+          <span class="txtTit">APP1 MAC OVOS CAMIL PARAFUSO 500g</span>
+          <span class="RCod">
+										(Código:
+										943338
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">2,89</span></td>
+      </tr>
+      <tr id="Item + 41">
+        <td valign="top">
+          <span class="txtTit">SH PALMOLIVE SOS COLAGENO 650ml</span>
+          <span class="RCod">
+										(Código:
+										939321
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										10,7</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">10,70</span></td>
+      </tr>
+      <tr id="Item + 42">
+        <td valign="top">
+          <span class="txtTit">AMAC CONC DOWNY 4X BRISA DE VERAO 500ml</span>
+          <span class="RCod">
+										(Código:
+										985004
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										14,19</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">14,19</span></td>
+      </tr>
+      <tr id="Item + 43">
+        <td valign="top">
+          <span class="txtTit">ACUCAR REF UNIAO 1kg</span>
+          <span class="RCod">
+										(Código:
+										124
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>5</span>
+          <span class="RUN">
+            <strong>UN: </strong>PT</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,79</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">18,95</span></td>
+      </tr>
+      <tr id="Item + 44">
+        <td valign="top">
+          <span class="txtTit">ARROZ TIPO 1 TARUMA 5KG</span>
+          <span class="RCod">
+										(Código:
+										950833
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>PT</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										15,25</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">15,25</span></td>
+      </tr>
+      <tr id="Item + 45">
+        <td valign="top">
+          <span class="txtTit">FEIJAO CARIOCA TARUMA 1kg</span>
+          <span class="RCod">
+										(Código:
+										995727
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										5,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">5,99</span></td>
+      </tr>
+      <tr id="Item + 46">
+        <td valign="top">
+          <span class="txtTit">CONDIC OX LONGOS 400ml</span>
+          <span class="RCod">
+										(Código:
+										940044
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										31,5</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">31,50</span></td>
+      </tr>
+      <tr id="Item + 47">
+        <td valign="top">
+          <span class="txtTit">AGUA SANIT SELECT 1L</span>
+          <span class="RCod">
+										(Código:
+										954063
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										3,25</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">3,25</span></td>
+      </tr>
+      <tr id="Item + 48">
+        <td valign="top">
+          <span class="txtTit">CR TRAT SKALA MELANCIA 1Kg</span>
+          <span class="RCod">
+										(Código:
+										944356
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										10,49</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">10,49</span></td>
+      </tr>
+      <tr id="Item + 49">
+        <td valign="top">
+          <span class="txtTit">DESINF BUFALO EUCALIPTO 2L</span>
+          <span class="RCod">
+										(Código:
+										85499
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>BB</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										4,85</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">4,85</span></td>
+      </tr>
+      <tr id="Item + 50">
+        <td valign="top">
+          <span class="txtTit">BEB MISTA KAPO MORANGO 200ml</span>
+          <span class="RCod">
+										(Código:
+										953336
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										2,79</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">2,79</span></td>
+      </tr>
+      <tr id="Item + 51">
+        <td valign="top">
+          <span class="txtTit">SAB BARRA JOHNSON ROMA 80G</span>
+          <span class="RCod">
+										(Código:
+										968014
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>3</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,99</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">5,97</span></td>
+      </tr>
+      <tr id="Item + 52">
+        <td valign="top">
+          <span class="txtTit">DETERG LIQ MINUANO MACA 500ml</span>
+          <span class="RCod">
+										(Código:
+										356093
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>FR</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">3,78</span></td>
+      </tr>
+      <tr id="Item + 53">
+        <td valign="top">
+          <span class="txtTit">DETERG LIQ MINUANO MARINE 500ml</span>
+          <span class="RCod">
+										(Código:
+										961824
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>FR</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										1,89</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">3,78</span></td>
+      </tr>
+      <tr id="Item + 54">
+        <td valign="top">
+          <span class="txtTit">PAPEL HIG FD ATUALLE NEUTRO 12UN 20m</span>
+          <span class="RCod">
+										(Código:
+										942001
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										12,5</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">12,50</span></td>
+      </tr>
+      <tr id="Item + 55">
+        <td valign="top">
+          <span class="txtTit">SUCO CONC MAGUARY MARACUJA 500ml</span>
+          <span class="RCod">
+										(Código:
+										317101
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>2</span>
+          <span class="RUN">
+            <strong>UN: </strong>GA</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										4,41</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">8,82</span></td>
+      </tr>
+      <tr id="Item + 56">
+        <td valign="top">
+          <span class="txtTit">CONJ POTES PLAST SANREMO 3X785ml</span>
+          <span class="RCod">
+										(Código:
+										946371
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										14,7</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">14,70</span></td>
+      </tr>
+      <tr id="Item + 57">
+        <td valign="top">
+          <span class="txtTit">*K* REFRESCO PO FRISCO GUARANA 18g</span>
+          <span class="RCod">
+										(Código:
+										941174
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										0,79</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">0,79</span></td>
+      </tr>
+      <tr id="Item + 58">
+        <td valign="top">
+          <span class="txtTit">*K* REFRESCO PO FRISCO MANGA 18g</span>
+          <span class="RCod">
+										(Código:
+										941316
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										0,79</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">0,79</span></td>
+      </tr>
+      <tr id="Item + 59">
+        <td valign="top">
+          <span class="txtTit">*K* REFRESCO PO FRISCO LIMAO 18g</span>
+          <span class="RCod">
+										(Código:
+										941315
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										0,79</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">0,79</span></td>
+      </tr>
+      <tr id="Item + 60">
+        <td valign="top">
+          <span class="txtTit">*K* REFRESCO PO FRISCO MARACUJA 18g</span>
+          <span class="RCod">
+										(Código:
+										941290
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										0,79</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">0,79</span></td>
+      </tr>
+      <tr id="Item + 61">
+        <td valign="top">
+          <span class="txtTit">*K* REFRESCO PO FRISCO UVA 18g</span>
+          <span class="RCod">
+										(Código:
+										941314
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										0,79</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">0,79</span></td>
+      </tr>
+      <tr id="Item + 62">
+        <td valign="top">
+          <span class="txtTit">*K* REFRESCO PO FRISCO LARANJA ACEROLA 18g</span>
+          <span class="RCod">
+										(Código:
+										941312
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										0,69</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">0,69</span></td>
+      </tr>
+      <tr id="Item + 63">
+        <td valign="top">
+          <span class="txtTit">*K* REFRESCO PO FRISCO MORANGO 18g</span>
+          <span class="RCod">
+										(Código:
+										941286
+										)
+									</span>
+          <br>
+          <span class="Rqtd">
+            <strong>Qtde.:</strong>1</span>
+          <span class="RUN">
+            <strong>UN: </strong>UN</span>
+          <span class="RvlUnit">
+            <strong>Vl. Unit.:</strong>
+										 
+										0,69</span>
+        </td>
+        <td align="right" valign="top" class="txtTit noWrap">
+									Vl. Total
+									<br><span class="valor">0,69</span></td>
+      </tr>
+    </table>
+    <div id="totalNota" class="txtRight">
+      <div id="linhaTotal">
+        <label>Qtd. total de itens:</label>
+        <span class="totalNumb">63</span>
+      </div>
+      <div id="linhaTotal">
+        <label>Valor total R$:</label>
+        <span class="totalNumb">595,08</span>
+      </div>
+      <div id="linhaTotal">
+        <label>Descontos R$:</label>
+        <span class="totalNumb">7,10</span>
+      </div>
+      <div id="linhaTotal" class="linhaShade">
+        <label>Valor a pagar R$:</label>
+        <span class="totalNumb txtMax">587,98</span>
+      </div>
+      <div id="linhaForma">
+        <label>Forma de pagamento:</label>
+        <span class="totalNumb txtTitR">Valor pago R$:</span>
+      </div>
+      <div id="linhaTotal">
+        <label class="tx">
+											Vale Alimentação
+										</label>
+        <span class="totalNumb">587,98</span>
+      </div>
+      <div id="linhaTotal">
+        <label class="tx">Troco </label>
+        <span class="totalNumb">NaN</span>
+      </div>
+    </div>
+  </div>
+  <div id="infos" class="txtCenter">
+    <div data-role="collapsible" data-collapsed-icon="carat-d" data-expanded-icon="carat-u" data-collapsed="false">
+      <h4>Informações gerais da Nota</h4>
+      <ul data-role="listview" data-inset="false">
+        <li>
+          <strong>EMISSÃO NORMAL</strong>
+          <br>
+          <br>
+          <strong>Número: </strong>15756<strong> Série: </strong>117<strong> Emissão: </strong>16/12/2025 20:59:36
+								- Via Consumidor
+								<br><br><strong>Protocolo de Autorização: </strong>135253822418193       16/12/2025 20:59:37<br><br><strong>
+										Ambiente de Produção -
+									
+									Versão XML:
+									4.00
+									- Versão XSLT: 2.05
+								</strong></li>
+      </ul>
+    </div>
+    <div data-role="collapsible" data-collapsed-icon="carat-d" data-expanded-icon="carat-u" data-collapsed="false">
+      <h4>Chave de acesso</h4>
+      <ul data-role="listview" data-inset="false">
+        <li>
+								Consulte pela Chave de Acesso em
+								
+								https://www.nfce.fazenda.sp.gov.br/consulta<br><br><strong>Chave de acesso:</strong><br><span class="chave">3525 1201 1575 5500 1771 6511 7000 0157 5618 4518 2880</span></li>
+      </ul>
+    </div>
+    <div data-role="collapsible" data-collapsed-icon="carat-d" data-expanded-icon="carat-u" data-collapsed="false">
+      <h4>Consumidor</h4>
+      <ul data-role="listview" data-inset="false">
+        <li>
+          <strong>Consumidor não identificado</strong>
+        </li>
+      </ul>
+    </div>
+    <div data-role="collapsible" data-collapsed-icon="carat-d" data-expanded-icon="carat-u" data-collapsed="false">
+      <h4>Informações de interesse do contribuinte</h4>
+      <ul data-role="listview" data-inset="false">
+        <li>[##TRIBUTOS TOTAIS INCIDENTES (LEI FEDERAL 12.7412012) - FEDERAL R$ 89,37 ESTADUAL R$ 106,76 MUNICIPAL R$ 0,00 ; COO: 483481, PDV: 117]</li>
+      </ul>
+    </div>
+  </div>
+</div>
+            </div>
+        </div>
+        <div style="width: 100%; max-width: 510px; margin: 10px auto; background-color: white;">
+            <div>
+                <div style="width: 50%; float: left; text-align: left">
+                    
+<span class="timestampConsulta">Data/Hora: 21/12/2025 08:15</span>
+
+                </div>
+                <div style="width: 50%; float: right; text-align: right;">
+                    
+
+                </div>
+            </div>
+            <div id="Botoes" class="naoImprimir BotoesResponsivos" style="float: left; margin-top: 20px; margin-bottom: 80px; width: 100%;">
+                <div style="width: 39%; float: left;">
+                    <input type="button" name="btnImprimir" value="Imprimir&#32;DANFE&#32;NFC-e" onclick="window.print();&#32;return&#32;true;__doPostBack(&#39;btnImprimir&#39;,&#39;&#39;)" id="btnImprimir" class="primario&#32;|&#32;imprimir" />
+                </div>
+                <div style="width: 34%; float: left;">
+                    <input type="button" name="btnVisualizarAbas" value="Visualizar&#32;em&#32;Abas" onclick="javascript:__doPostBack(&#39;btnVisualizarAbas&#39;,&#39;&#39;)" id="btnVisualizarAbas" class="primario&#32;|&#32;visualizar" />
+                </div>
+                <div style="width: 25%; float: left">
+                    <input type="button" name="btnNovaConsulta" value="Nova&#32;consulta" onclick="javascript:__doPostBack(&#39;btnNovaConsulta&#39;,&#39;&#39;)" id="btnNovaConsulta" class="primario&#32;|&#32;consultar" />
+                </div>
+            </div>
+        </div>
+    
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="2CB5E186" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="49SyShSh4go8v33tmIqXA6DWQ7cbTxi7Yp44dZvnqQS1rWUp9x8jbH2JszK2ZaxFkEApVPxjQkbViA0IJMill6VIwlL6RzC3zsAkG0GwI9r9/vIqgs3I2OWYxtH/nwmPxT2uh8xItuZGk0rGV8PbVVyKddTxnef842vCgDt1PDE=" />
+</div></form>
+    <script type="text/javascript">
+      
+        function ExibirImagemCancelada() {
+            var objImg = document.getElementById('imgInvalido1');
+            if ($('#hdfNotaCancelada').length) {
+                AcertarDivErro(objImg);
+            }
+        }
+
+        function ExibirImagemDenegada() {
+            var objImg = document.getElementById('imgInvalido2');
+            if ($('#hdfNotaDenegada').length) {
+                AcertarDivErro(objImg);
+            }
+        }
+
+        function AjustarExibicaoEPEC()
+        {
+            if ($('#hdfSomenteEPEC').length) {
+                $('.ui-page').css({ "minHeight": "500px" });
+            }
+        }
+
+        function AcertarDivErro(objImg) {
+            $('#erro').css({ "display": "block" });
+            $('#erro').css({ "maxWidth": "510px" });
+            $('#erro').css({ "maxHeight": "200px" });
+            objImg.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block content %}
+<div class="d-flex" style="min-height: 100vh;">
+    
+    <div class="flex-shrink-0 bg-dark" style="width: 280px;">
+        {% include 'partials/sidebar_admin.html' %}
+    </div>
+
+    <div class="flex-grow-1 bg-light" style="overflow-y: auto; max-height: 100vh;">
+        
+        <div class="container-fluid p-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-0 text-gray-800">{{ titulo }}</h2>
+                    <span class="text-muted small">Painel de Controle da Frota</span>
+                </div>
+                <div class="date-display text-muted bg-white px-3 py-2 rounded shadow-sm border">
+                     <i class="far fa-calendar-alt me-2 text-primary"></i> {% now "d \d\e F \d\e Y" %}
+                </div>
+            </div>
+
+            <div class="card shadow mb-4 border-0">
+                <div class="card-header py-0 bg-white border-bottom-0 pt-3">
+                    <ul class="nav nav-tabs card-header-tabs" id="carroTabs" role="tablist">
+                        
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                                <i class="fas fa-chart-pie me-2"></i> Visão Geral
+                            </button>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="veiculos-tab" data-bs-toggle="tab" data-bs-target="#veiculos" type="button" role="tab">
+                                <i class="fas fa-car me-2"></i> Veículos
+                            </button>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="abastecimento-tab" data-bs-toggle="tab" data-bs-target="#abastecimento" type="button" role="tab">
+                                <i class="fas fa-gas-pump me-2"></i> Abastecimento
+                            </button>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="manutencao-tab" data-bs-toggle="tab" data-bs-target="#manutencao" type="button" role="tab">
+                                <i class="fas fa-tools me-2"></i> Manutenção
+                            </button>
+                        </li>
+
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="relatorio-tab" data-bs-toggle="tab" data-bs-target="#relatorio" type="button" role="tab">
+                                <i class="fas fa-file-invoice me-2"></i> Relatórios
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body bg-light">
+                    <div class="tab-content" id="carroTabsContent">
+                        
+                        <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 shadow-sm border-start border-primary border-5 h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <div class="text-uppercase text-primary fw-bold text-xs mb-1">Total Veículos</div>
+                                                    <div class="h5 mb-0 fw-bold text-gray-800">{{ total_veiculos }}</div>
+                                                </div>
+                                                <i class="fas fa-car fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 shadow-sm border-start border-success border-5 h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <div class="text-uppercase text-success fw-bold text-xs mb-1">Status Frota</div>
+                                                    <div class="h5 mb-0 fw-bold text-gray-800">{{ status_frota }}</div>
+                                                </div>
+                                                <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-0 shadow-sm border-start border-warning border-5 h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <div class="text-uppercase text-warning fw-bold text-xs mb-1">Alertas</div>
+                                                    <div class="h5 mb-0 fw-bold text-gray-800">{{ veiculos_atencao }}</div>
+                                                </div>
+                                                <i class="fas fa-bell fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-6 mb-4">
+                                    <div class="card shadow-sm border-0 h-100">
+                                        <div class="card-header bg-white py-3 border-0">
+                                            <h6 class="m-0 fw-bold text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Atenção Necessária</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if alertas %}
+                                                <ul class="list-group list-group-flush">
+                                                    {% for alerta in alertas %}
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                            <div>
+                                                                <span class="fw-bold">{{ alerta.veiculo.modelo }}</span>
+                                                                <br>
+                                                                <small class="text-muted">{{ alerta.mensagem }}</small>
+                                                            </div>
+                                                            <span class="badge bg-{{ alerta.tipo }} rounded-pill"><i class="fas fa-info"></i></span>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <div class="text-center py-5 text-muted">
+                                                    <i class="fas fa-check-double fa-3x mb-3 text-success opacity-25"></i>
+                                                    <p>Nenhuma pendência crítica.</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 mb-4">
+                                    <div class="card shadow-sm border-0 h-100">
+                                        <div class="card-header bg-white py-3 border-0">
+                                            <h6 class="m-0 fw-bold text-primary"><i class="fas fa-chart-bar me-2"></i>Analise</h6>
+                                        </div>
+                                        <div class="card-body d-flex justify-content-center align-items-center">
+                                            <div class="text-center text-muted opacity-50">
+                                                <i class="fas fa-chart-area fa-4x mb-2"></i>
+                                                <p>Gráfico de consumo será exibido aqui.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="veiculos" role="tabpanel">
+                            <div class="row">
+                                <div class="col-lg-4 mb-4">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-white fw-bold border-0 pt-3">
+                                            <span id="form-titulo"><i class="fas fa-plus me-2"></i>Novo Veículo</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="form-veiculo" method="post" action="{% url 'carro:salvar_veiculo' %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="veiculo_id" id="veiculo_id" value="">
+                                                
+                                                {% for field in form %}
+                                                    <div class="mb-3">
+                                                        <label for="{{ field.id_for_label }}" class="form-label small fw-bold text-secondary">{{ field.label }}</label>
+                                                        {{ field }}
+                                                        <div class="invalid-feedback"></div>
+                                                    </div>
+                                                {% endfor %}
+
+                                                <div class="d-grid gap-2 mt-4">
+                                                    <button type="submit" class="btn btn-primary fw-bold">Salvar</button>
+                                                    <button type="button" class="btn btn-light border" id="btn-cancelar" style="display:none;">Cancelar</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-8">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-white fw-bold border-0 pt-3">
+                                            Lista de Veículos
+                                        </div>
+                                        <div class="card-body p-0" id="tabela-container">
+                                            {% include "partials/_tabela_veiculos.html" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="abastecimento" role="tabpanel">
+                            <div class="text-center p-5">
+                                <i class="fas fa-gas-pump fa-3x text-secondary opacity-25 mb-3"></i>
+                                <h5>Módulo de Abastecimento</h5>
+                                <p class="text-muted">Aguardando integração com App Deslocamento.</p>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="manutencao" role="tabpanel">
+                             <div class="text-center p-5">
+                                <i class="fas fa-tools fa-3x text-secondary opacity-25 mb-3"></i>
+                                <h5>Módulo de Manutenção</h5>
+                                <p class="text-muted">Histórico de serviços e agendamentos.</p>
+                            </div>
+                        </div>
+                        
+                         <div class="tab-pane fade" id="relatorio" role="tabpanel">
+                            <div class="text-center p-5">
+                               <i class="fas fa-file-alt fa-3x text-secondary opacity-25 mb-3"></i>
+                               <h5>Relatórios</h5>
+                           </div>
+                       </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+    <script src="{% static 'js/gerenciar_veiculo.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

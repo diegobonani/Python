@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Meus Estudos - Boletim{% endblock %}
+
+{% block sidebar %}
+    {% include 'partials/sidebar_usuario.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Meus Estudos (Boletim)</h1>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAddMateria">
+                <i class="fas fa-plus"></i> Nova Matéria
+            </button>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalAddNota">
+                <i class="fas fa-plus"></i> Lançar Nota
+            </button>
+        </div>
+    </div>
+    
+    {% if not materias %}
+    <div class="alert alert-info text-center">
+        Você ainda não cadastrou nenhuma matéria. Comece clicando em "Nova Matéria".
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% for materia in materias %}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100" id="materia-card-{{ materia.pk }}">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">{{ materia.nome }}</h6>
+                    <button class="btn btn-sm btn-outline-danger btn-deletar-materia" data-id="{{ materia.pk }}" data-nome="{{ materia.nome }}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless">
+                            <tbody>
+                                {% for nota in materia.notas.all %}
+                                <tr id="nota-row-{{ nota.pk }}">
+                                    <td>{{ nota.descricao }}</td>
+                                    <td>
+                                        <span class="fw-bold">{{ nota.nota_obtida|floatformat:"2" }}</span> / {{ nota.nota_maxima|floatformat:"0" }}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar" role="progressbar" style="--bs-progress-bar-width: {{ nota.percentual|floatformat:2 }}%;" aria-valuenow="{{ nota.percentual|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger py-0 px-1 btn-deletar-nota" data-id="{{ nota.pk }}">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        Nenhuma nota lançada para esta matéria.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="modalAddMateria" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formAddMateria" method="POST">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Nova Matéria</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_materia.as_p }}
+                    <div id="form-errors-materia" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAddNota" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formAddNota" method="POST">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Lançar Nova Nota</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_nota.as_p }}
+                    <div id="form-errors-nota" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalExcluirEstudo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formExcluirEstudo" method="POST">
+                {% csrf_token %}
+                <div class="modal-header"><h5 class="modal-title" id="excluirEstudoTitle">Confirmar Exclusão</h5></div>
+                <div class="modal-body">
+                    <p id="excluirEstudoText"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    // Passa as URLs de AJAX para o arquivo JS
+    window.URL_ADD_MATERIA = "{% url 'jornada:adicionar_materia_ajax' %}";
+    window.URL_ADD_NOTA = "{% url 'jornada:adicionar_nota_ajax' %}";
+    window.URL_DELETAR_MATERIA = "{% url 'jornada:deletar_materia_ajax' pk=0 %}";
+    window.URL_DELETAR_NOTA = "{% url 'jornada:deletar_nota_ajax' pk=0 %}";
+</script>
+<script src="{% static 'js/meus_estudos.js' %}"></script>
+{% endblock %}

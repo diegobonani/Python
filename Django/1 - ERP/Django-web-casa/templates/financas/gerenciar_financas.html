@@ -1,0 +1,350 @@
+{% extends 'base_dashboard.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Gerenciar Finanças{% endblock %}
+
+{% block style %}
+    {{ block.super }}
+    <style>
+        /* =========================================
+           1. LAYOUT & ACTION BAR
+           ========================================= */
+        /* Garante que o container ocupe a altura correta sem scroll duplo */
+        .content-wrapper {
+            display: flex; flex-direction: column; height: 100%;
+        }
+
+        /* Barra Flutuante de Ação */
+        .action-bar { 
+            background: #fff; padding: 1rem; border-radius: 12px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            flex-wrap: wrap; gap: 10px; border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* =========================================
+           2. ABAS PERSONALIZADAS
+           ========================================= */
+        .nav-tabs .nav-link { 
+            border: none; color: #6c757d; font-weight: 600; padding: 1rem 1.5rem; 
+            transition: all 0.2s;
+        }
+        .nav-tabs .nav-link.active { 
+            color: #198754; /* Verde Finanças */
+            border-bottom: 3px solid #198754; 
+            background: transparent; 
+        }
+        .nav-tabs .nav-link:hover:not(.active) { 
+            color: #157347; 
+            background-color: rgba(25, 135, 84, 0.05); 
+        }
+        .nav-tabs .nav-link.disabled { color: #e9ecef; }
+
+        /* =========================================
+           3. CARDS & DASHBOARD
+           ========================================= */
+        .card-dashboard { 
+            border: none; border-radius: 12px; 
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1); 
+            background: #fff; margin-bottom: 1.5rem; width: 100%;
+        }
+        
+        /* Cards de Contas (Saldos) */
+        .card-conta { 
+            transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; border: 1px solid #f0f0f0;
+        }
+        .card-conta:hover { 
+            transform: translateY(-5px); box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08) !important; 
+        }
+        .card-saldo-valor { font-size: 1.6rem; font-weight: 700; margin-bottom: 0; }
+
+        /* Filtros e Loaders */
+        .filter-label { font-size: 0.75rem; text-transform: uppercase; color: #888; margin-bottom: 4px; font-weight: 700; }
+        .loading-overlay { display: flex; justify-content: center; align-items: center; padding: 3rem; flex-direction: column; }
+    </style>
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'partials/sidebar_admin.html' %}
+{% endblock %}
+
+{% block main_content %}
+<div class="content-wrapper">
+
+    <div class="action-bar">
+        <div class="d-flex align-items-center">
+            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px;">
+                <i class="fas fa-wallet fa-lg"></i>
+            </div>
+            <div>
+                <h4 class="mb-0 fw-bold text-dark">Gestão Financeira</h4>
+                <small class="text-muted">Controle de Saldos e Lançamentos</small>
+            </div>
+        </div>
+
+        <div id="container-botoes" class="d-flex gap-2">
+            <button id="btn-novo-lancamento" class="btn btn-success shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAdicionarLancamento">
+                <i class="fas fa-plus me-2"></i>Novo Lançamento
+            </button>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4 ps-2 border-bottom-0" id="financasTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="saldos-tab" data-bs-toggle="tab" data-bs-target="#saldos-pane" type="button" role="tab">
+                <i class="fas fa-chart-pie me-2"></i>Visão Geral & Saldos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="lancamentos-tab" data-bs-toggle="tab" data-bs-target="#lancamentos-pane" type="button" role="tab">
+                <i class="fas fa-list-ul me-2"></i>Extrato de Transações
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="simulacao-fin-tab" data-bs-toggle="tab" data-bs-target="#simulacao-fin-pane" type="button" role="tab">
+                <i class="fas fa-calculator me-2"></i>Simulação
+            </button>
+        </li>
+        <li class="nav-item"><button class="nav-link disabled"><i class="fas fa-receipt me-2"></i>Comprovantes</button></li>
+        <li class="nav-item"><button class="nav-link disabled"><i class="fas fa-calendar-alt me-2"></i>Parcelas</button></li>
+    </ul>
+
+    <div class="tab-content" id="financasTabContent">
+        
+        <div class="tab-pane fade show active" id="saldos-pane" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body p-4">
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 col-lg-5">
+                            <label for="filtro-contas" class="filter-label">Filtrar Contas Visíveis</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-filter text-muted"></i></span>
+                                <select id="filtro-contas" class="form-select border-start-0 ps-0" multiple>
+                                    {% for conta in contas %}
+                                        <option value="{{ conta.pk }}" selected>{{ conta.nome }} ({{ conta.usuario.username }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div id="card-total-saldos" class="col-xl-3 col-lg-4 col-md-6">
+                            <div class="card h-100 bg-dark text-white border-0 shadow card-conta">
+                                <div class="card-body d-flex flex-column justify-content-between position-relative overflow-hidden">
+                                    <div class="position-absolute end-0 bottom-0 opacity-10 me-3 mb-n2">
+                                        <i class="fas fa-coins fa-4x"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white-50 text-uppercase small fw-bold mb-2">Total Consolidado</h6>
+                                        <h2 id="valor-total-selecionado" class="fw-bold mb-0 display-6">R$ 0,00</h2>
+                                    </div>
+                                    <div class="mt-3">
+                                        <small class="text-white-50"><i class="fas fa-check-circle me-1"></i> Soma das contas visíveis</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% for conta in contas %}
+                        <div class="col-xl-3 col-lg-4 col-md-6 card-conta-wrapper" data-id="{{ conta.pk }}" data-saldo="{{ conta.saldo_atual|stringformat:'f' }}">
+                            <div class="card h-100 shadow-sm card-conta">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <i class="fas fa-university text-muted"></i>
+                                            </div>
+                                            <h6 class="card-title fw-bold text-dark mb-0">{{ conta.nome }}</h6>
+                                        </div>
+                                        <span class="badge bg-light text-secondary border">{{ conta.usuario.username|slice:":3"|upper }}</span>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <small class="text-muted text-uppercase" style="font-size: 0.7rem; font-weight: 700;">Saldo Disponível</small>
+                                        <h3 class="card-saldo-valor text-{% if conta.saldo_atual >= 0 %}success{% else %}danger{% endif %}">
+                                            R$ {{ conta.saldo_atual|floatformat:"2g" }}
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white border-top-0 pt-0 pb-3">
+                                    <button class="btn btn-sm btn-outline-primary w-100 btn-ver-transacoes" data-conta-id="{{ conta.pk }}">
+                                        <i class="fas fa-search me-1"></i> Ver Extrato
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i class="fas fa-info-circle fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="alert-heading fw-bold">Nenhuma conta cadastrada</h6>
+                                    <p class="mb-0">Cadastre contas bancárias ou carteiras no painel administrativo para ver os saldos aqui.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="lancamentos-pane" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body p-4">
+                    
+                    <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+                        <div class="w-100 mw-25">
+                            <label for="filtro-tipo" class="filter-label">Filtrar Movimentações</label>
+                            <select id="filtro-tipo" class="form-select fw-bold text-primary border-primary">
+                                <option value="TODOS" selected>Todas as Transações</option>
+                                <option value="Receitas">Entradas (Receitas)</option>
+                                <option value="Despesas">Saídas (Despesas)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="tabela-financas-container">
+                        <div class="loading-overlay">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-3 text-muted fw-bold">Carregando extrato...</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-pane fade" id="simulacao-fin-pane" role="tabpanel">
+            <div class="card card-dashboard" id="simulacao-fin-container">
+                <div class="card-body p-5">
+                    <div class="loading-overlay">
+                        <div class="spinner-border text-primary"></div>
+                        <p class="mt-3 text-muted">Carregando módulo de simulação...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarLancamento" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formAdicionarLancamento" method="post" action="{% url 'financas:adicionar_financa' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Novo Lançamento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            {{ form_lancamento.as_p }}
+                            
+                            <div id="form-errors-add" class="alert alert-danger mt-3 shadow-sm" style="display: none;">
+                                <i class="fas fa-exclamation-circle me-2"></i><span></span>
+                            </div>
+
+                            <div class="campos-carro-container mt-3 p-3 bg-white border rounded d-none">
+                                <h6 class="text-primary fw-bold border-bottom pb-2 mb-3"><i class="fas fa-car me-2"></i>Dados do Veículo</h6>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success px-4"><i class="fas fa-save me-2"></i>Salvar Lançamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarLancamento" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formEditarLancamento">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Lançamento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            {{ form_lancamento.as_p }}
+                            <div class="alert alert-danger mt-3 d-none"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalConfirmarExclusaoLancamento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title"><i class="fas fa-trash-alt me-2"></i>Excluir?</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <p class="mb-0 text-muted">Tem certeza que deseja remover este lançamento? Esta ação é irreversível.</p>
+            </div>
+            <div class="modal-footer justify-content-center bg-light border-0">
+                <form id="formExcluirLancamento" method="post" class="d-flex gap-2 w-100">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">Não</button>
+                    <button type="submit" class="btn btn-danger flex-fill fw-bold">Sim, Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow-lg" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-bold" id="successToastBody">
+                </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- VARIÁVEIS GLOBAIS PARA O JS ---
+    window.URL_TABELA_FINANCAS = "{% url 'financas:tabela_financas_partial' %}";
+    window.URL_GET_CATEGORIAS = "{% url 'financas:get_categorias_por_tipo' %}";
+    
+    // URLs de CRUD
+    window.URL_GET_LANCAMENTO_JSON = "{% url 'financas:get_financa_json' pk=0 %}";
+    window.URL_EDITAR_LANCAMENTO = "{% url 'financas:editar_financa' pk=0 %}";
+    window.URL_DELETAR_LANCAMENTO = "{% url 'financas:deletar_financa' pk=0 %}";
+    
+    // URLs Específicas de Veículos (Importante para o JS V24.2)
+    window.URL_GET_SERVICOS_VEICULO = "";
+    window.URL_GET_VEICULO_KM = "";
+    window.CATEGORIA_CARRO_ID = "{{ categoria_carro_id|default:'5' }}"; // Passar pelo context processor ou view
+
+    // URL Simulação
+    window.URL_ABA_SIMULACAO_FINANCAS = "{% url 'financas:aba_simulacao_financeira_partial' %}";
+
+    window.DATATABLES_LANGUAGE_URL = "{% static 'js/datatables-pt-br.json' %}";
+</script>
+
+<script src="{% static 'js/gerenciar_financas.js' %}"></script>
+{% endblock %}

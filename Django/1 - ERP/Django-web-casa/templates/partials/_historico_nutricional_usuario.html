@@ -1,0 +1,88 @@
+{% load humanize %}
+
+<div class="p-3">
+    <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+        <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center fw-bold me-3 shadow-sm border border-white" 
+             style="width: 48px; height: 48px; font-size: 1.2rem;">
+            {{ usuario.username|slice:":1"|upper }}
+        </div>
+        <div>
+            <h6 class="mb-0 fw-bold text-dark">Histórico Nutricional</h6>
+            <small class="text-muted">Usuário: <strong class="text-dark">{{ usuario.get_full_name|default:usuario.username }}</strong></small>
+        </div>
+        <div class="ms-auto text-end">
+            <small class="text-muted d-block" style="font-size: 0.75rem;">Período</small>
+            <span class="badge bg-light text-dark border">Últimos 7 dias</span>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-3 border-0 rounded-start small text-muted text-uppercase fw-bold">Data</th>
+                    <th class="text-center border-0 small text-muted text-uppercase fw-bold">Ref.</th>
+                    <th class="border-0 small text-muted text-uppercase fw-bold" style="width: 45%;">Consumo (Kcal)</th>
+                    <th class="text-end pe-3 border-0 rounded-end small text-muted text-uppercase fw-bold">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dia in historico %}
+                <tr>
+                    <td class="ps-3">
+                        <div class="d-flex flex-column">
+                            <span class="fw-bold text-dark">{{ dia.data|date:"d/m" }}</span>
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">{{ dia.data|date:"l" }}</small>
+                        </div>
+                    </td>
+
+                    <td class="text-center">
+                        {% if dia.qtd > 0 %}
+                            <span class="badge bg-white border text-secondary shadow-sm rounded-pill px-2">
+                                {{ dia.qtd }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted opacity-25">-</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 me-3 shadow-sm" style="height: 8px; background-color: #f1f3f5; border-radius: 4px;">
+                                <div class="progress-bar bg-{{ dia.cor }}" 
+                                     role="progressbar" 
+                                     style="--w: {{ dia.pct }}%; width: var(--w); max-width: 100%; border-radius: 4px;"
+                                     aria-valuenow="{{ dia.pct }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <span class="fw-bold text-dark small" style="min-width: 45px; text-align: right;">
+                                {{ dia.total_cal }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td class="text-end pe-3">
+                        {% if dia.total_cal == 0 %}
+                            <span class="badge bg-light text-muted border fw-normal">Vazio</span>
+                        {% elif dia.pct > 100 %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger fw-normal">
+                                <i class="fas fa-arrow-up me-1"></i>Excedeu
+                            </span>
+                        {% elif dia.pct >= 80 %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success fw-normal">
+                                <i class="fas fa-check me-1"></i>Meta OK
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning bg-opacity-10 text-dark border border-warning fw-normal">
+                                <i class="fas fa-arrow-down me-1"></i>Baixo
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

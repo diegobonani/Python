@@ -1,0 +1,49 @@
+{% if veiculos %}
+<div class="table-responsive">
+    <table class="table table-hover table-striped align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Veículo</th>
+                <th>Placa</th>
+                <th>KM Atual</th>
+                <th class="text-end">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for veiculo in veiculos %}
+            <tr>
+                <td>
+                    <div class="fw-bold">{{ veiculo.nome }}</div>
+                    <small class="text-muted">{{ veiculo.marca }} - {{ veiculo.modelo }} ({{ veiculo.ano }})</small>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ veiculo.placa }}</span></td>
+                <td>{{ veiculo.km_atual|floatformat:0 }} km</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-warning btn-editar" 
+                            data-url="{% url 'carro:obter_veiculo' veiculo.id %}"
+                            title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    
+                    <a href="{% url 'carro:detalhe_veiculo' veiculo.id %}" class="btn btn-sm btn-outline-info" title="Detalhes">
+                        <i class="fas fa-eye"></i>
+                    </a>
+
+                    <button class="btn btn-sm btn-outline-danger btn-excluir" 
+                            data-url="{% url 'carro:excluir_veiculo' veiculo.id %}"
+                            title="Excluir">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="p-5 text-center text-muted">
+    <i class="fas fa-car fa-3x mb-3 text-secondary opacity-50"></i>
+    <p class="h5">Nenhum veículo encontrado.</p>
+    <p>Preencha o formulário ao lado para cadastrar o primeiro.</p>
+</div>
+{% endif %}

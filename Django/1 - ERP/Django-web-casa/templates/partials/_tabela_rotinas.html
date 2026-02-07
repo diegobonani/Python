@@ -1,0 +1,35 @@
+<table id="tabela-rotinas" class="table table-striped table-bordered" style="width:100%">
+    <thead>
+      <tr>
+        <th>Tarefa</th>
+        <th>Dia da Semana</th>
+        <th>Hora</th>
+        <th>Pontos</th>
+        <th>Responsáveis</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tarefa in tarefas %}
+        <tr>
+          <td>{{ tarefa.tarefa }}</td>
+          <td>{{ tarefa.dia_semana }}</td>
+          <td>{{ tarefa.hora|time:"H:i" }}</td>
+          <td>{{ tarefa.pontos }}</td>
+          <td>
+            {% for user in tarefa.responsaveis.all %}
+              <span class="badge bg-info">{{ user.username }}</span>
+            {% empty %}
+              <span class="badge bg-secondary">Nenhum</span>
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  <script>
+    // Inicializa o DataTable para esta tabela específica
+    $('#tabela-rotinas').DataTable({
+      language: { url: 'https://cdn.datatables.net/plug-ins/2.0.8/i18n/pt-BR.json' }
+    });
+  </script>

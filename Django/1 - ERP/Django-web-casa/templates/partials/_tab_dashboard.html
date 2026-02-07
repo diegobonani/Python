@@ -1,0 +1,90 @@
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 border-0 border-start border-primary border-5">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Veículos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_veiculos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-car fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 border-0 border-start border-success border-5">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Em Bom Estado</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">100%</div> </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2 border-0 border-start border-info border-5">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Gasto Mensal (Estimado)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">R$ 0,00</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-danger text-white">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-bell me-2"></i>Alertas de Manutenção</h6>
+            </div>
+            <div class="card-body">
+                {% if alertas %}
+                    {% for alerta in alertas %}
+                        <div class="alert alert-{{ alerta.tipo }} d-flex align-items-center" role="alert">
+                            <i class="fas fa-exclamation-triangle me-3"></i>
+                            <div>
+                                <strong>{{ alerta.veiculo.nome }}:</strong> {{ alerta.mensagem }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted p-4">
+                        <i class="fas fa-check-double fa-3x mb-3 text-success opacity-50"></i>
+                        <p>Nenhum alerta crítico. Sua frota está em dia!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-dark text-white">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-chart-pie me-2"></i>Status da Frota</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area text-center p-5 bg-light rounded">
+                    <p class="text-muted">Gráfico de Consumo por Veículo</p>
+                    <i class="fas fa-chart-bar fa-4x text-gray-300"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

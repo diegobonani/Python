@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Ponto - {{ usuario_selecionado.username }}</title>
+    <style>
+        @page { size: A4 portrait; margin: 1.5cm; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 10px; }
+        h1 { text-align: center; color: #111; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+        .info { margin-bottom: 20px; font-size: 1.1em; }
+        .info-label { font-weight: bold; }
+        
+        .table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .table th, .table td {
+            border: 1px solid #aaa;
+            padding: 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .table thead th {
+            background-color: #f0f0f0;
+            text-align: center;
+            font-size: 9px;
+            padding: 8px 4px;
+        }
+        .table tbody td { font-size: 9px; }
+        .table tfoot td {
+            font-weight: bold;
+            background-color: #f1f3f5;
+            border-top: 2px solid #aaa;
+        }
+        
+        .text-center { text-align: center; }
+        .text-end { text-align: right; }
+        .text-muted { color: #6c757d; }
+        .fw-bold { font-weight: bold; }
+        .text-success { color: #198754; }
+        .text-danger { color: #dc3545; }
+        .text-info { color: #0dcaf0; }
+        .text-warning { color: #ffc107; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+            font-size: 8px;
+        }
+        .bg-danger { background-color: #dc3545; }
+        .bg-info { background-color: #0dcaf0; color: #000; }
+        .bg-warning { background-color: #ffc107; color: #000; }
+        .bg-secondary { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>Relatório de Jornada</h1>
+    
+    <div class="info">
+        <div><span class="info-label">Colaborador:</span> {{ usuario_selecionado.username }}</div>
+        <div>
+            <span class="info-label">Período:</span> 
+            {% if filtro_tipo == 'mes' %}
+                {{ mes_filtro|date:"F \d\e Y" }}
+            {% elif filtro_tipo == 'periodo' %}
+                {{ data_inicio|date:"d/m/Y" }} até {{ data_fim|date:"d/m/Y" }}
+            {% else %}
+                {{ data_filtro|date:"d/m/Y" }}
+            {% endif %}
+        </div>
+    </div>
+
+    <table class="table">
+        <thead class="table-light">
+            <tr>
+                <th class="text-nowrap">Data</th>
+                <th class="text-nowrap">Tipo</th>
+                <th class="text-center">Entrada</th>
+                <th class="text-center">S. Almoço</th>
+                <th class="text-center">R. Almoço</th>
+                <th class="text-center">Saída</th>
+                <th class="text-center">T. Almoço</th>
+                <th class="text-center">Total</th>
+                <th class="text-center">Extras</th>
+                <th class="text-end">A Receber</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for registro in registros_todos %}
+            <tr>
+                <td class="text-nowrap">{{ registro.data|date:"d/m/Y" }}</td>
+                <td class="text-nowrap">
+                    {% if registro.tipo_dia == 'ATESTADO' %}
+                        <span class="badge bg-danger">{{ registro.get_tipo_dia_display }}</span>
+                    {% elif registro.tipo_dia == 'FOLGA' %}
+                        <span class="badge bg-info">{{ registro.get_tipo_dia_display }}</span>
+                    {% elif registro.tipo_dia == 'BALANCO' %}
+                        <span class="badge bg-warning">{{ registro.get_tipo_dia_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ registro.get_tipo_dia_display }}</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ registro.entrada|time:"H:i"|default:"--" }}</td>
+                <td class="text-center">{{ registro.saida_almoco|time:"H:i"|default:"--" }}</td>
+                <td class="text-center">{{ registro.retorno_almoco|time:"H:i"|default:"--" }}</td>
+                <td class="text-center">{{ registro.saida|time:"H:i"|default:"--" }}</td>
+                <td class="text-center text-muted">{{ registro.horas_almoco|floatformat:2 }}h</td>
+                <td class="text-center fw-bold">{{ registro.horas_trabalhadas|floatformat:2 }}h</td>
+                <td class="text-center">
+                    {% if registro.horas_extras > 0 %}
+                        +{{ registro.horas_extras|floatformat:2 }}h
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td class="text-end fw-bold text-success">R$ {{ registro.valor_receber|floatformat:"2g" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10" class="text-center text-muted py-4">
+                    Nenhum registro encontrado para este período.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        
+        {% if registros_todos %}
+        <tfoot>
+            <tr class="table-light">
+                <td colspan="6" class="text-end fw-bold">TOTAIS DO PERÍODO:</td>
+                <td class="text-center">{{ soma_horas_almoco|floatformat:2 }}h</td>
+                <td class="text-center">{{ soma_horas_trabalhadas|floatformat:2 }}h</td>
+                <td class="text-center text-warning">+{{ soma_horas_extras|floatformat:2 }}h</td>
+                <td class="text-end text-success fs-6">
+                    R$ {{ soma_valor_receber|floatformat:"2g" }}
+                </td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+</body>
+</html>

@@ -1,0 +1,1087 @@
+{% extends 'base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestão de Estoque{% endblock %}
+
+{% block style %}
+    {{ block.super }}
+    <style>
+        /* Action Bar (Barra de Título Flutuante) */
+        .action-bar { 
+            background: #fff; padding: 1rem; border-radius: 12px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            flex-wrap: wrap; gap: 10px; border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* Abas Personalizadas */
+        .nav-tabs .nav-link { border: none; color: #6c757d; font-weight: 600; padding: 1rem 1.5rem; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; background: transparent; }
+        .nav-tabs .nav-link:hover { color: #0d6efd; background-color: rgba(13, 110, 253, 0.03); }
+
+        /* Filtros e Loading */
+        .filter-label { font-size: 0.75rem; text-transform: uppercase; color: #888; margin-bottom: 4px; font-weight: 700; }
+        .loading-overlay { display: flex; justify-content: center; align-items: center; padding: 3rem; flex-direction: column; }
+        .spinner-border { width: 3rem; height: 3rem; }
+        .btn i { margin-right: 5px; }
+
+        /* Cores de Status */
+        .tr-status-critico { background-color: #ffcccc !important; } 
+        .tr-status-baixo { background-color: #fff3cd !important; }
+        .tr-status-ok { background-color: #d1e7dd !important; }
+        .tr-status-cheio { background-color: #198754 !important; color: white !important; }
+        .tr-status-cheio td, .tr-status-cheio th { color: white; }
+        
+        /* Legenda */
+        .legenda-box { display: inline-block; width: 15px; height: 15px; border-radius: 3px; margin-right: 5px; vertical-align: middle; border: 1px solid #ccc;}
+        
+        /* Card Dashboard */
+        .card-dashboard { 
+            border: none; border-radius: 12px; 
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1); 
+            background: #fff; margin-bottom: 1.5rem; width: 100%;
+        }
+
+        /* Seletor de Imóvel */
+        .imovel-selector-wrapper {
+            background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 6px 15px; display: flex; align-items: center;
+        }
+    </style>
+{% endblock %}
+
+{% block main_content %}
+<div class="d-flex flex-column w-100">
+    
+    <div class="action-bar">
+        <div class="d-flex align-items-center mb-2 mb-md-0">
+            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+                <i class="fas fa-boxes fa-lg"></i>
+            </div>
+            <div>
+                <h4 class="mb-0 fw-bold text-dark">Estoque</h4>
+                <small class="text-muted">Gestão Multi-Propriedade</small>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 flex-wrap justify-content-end">
+            
+            <div class="imovel-selector-wrapper shadow-sm">
+                <i class="fas fa-building text-secondary me-2"></i>
+                <select id="filtro-imovel-global" class="form-select form-select-sm border-0 bg-transparent fw-bold text-dark" style="width: auto; cursor: pointer; min-width: 160px;">
+                    <option value="TODOS" selected>Todos os Imóveis</option>
+                    
+                    {% for imovel in imoveis_ativos %}
+                        <option value="{{ imovel.id }}">{{ imovel.nome }}</option>
+                    {% endfor %}
+
+                    {% if imoveis_inativos %}
+                        <optgroup label="Outros">
+                            {% for imovel in imoveis_inativos %}
+                                <option value="{{ imovel.id }}">{{ imovel.nome }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                </select>
+            </div>
+
+            <div id="container-botoes" class="d-flex gap-2">
+                <button id="btn-acao-casa" class="btn btn-success shadow-sm d-none" data-bs-toggle="modal" data-bs-target="#modalAdicionarCasa">
+                    <i class="fas fa-home"></i> Item Casa
+                </button>
+
+                <button id="btn-acao-pet" class="btn btn-warning text-dark shadow-sm d-none" data-bs-toggle="modal" data-bs-target="#modalAdicionarPet">
+                    <i class="fas fa-paw"></i> Item Pet
+                </button>
+
+                <button id="btn-acao-user" class="btn btn-info text-white shadow-sm d-none" data-bs-toggle="modal" data-bs-target="#modalAdicionarUsuario">
+                    <i class="fas fa-user"></i> Item Pessoal
+                </button>
+
+                <button id="btn-acao-compra" class="btn btn-dark shadow-sm d-none" data-bs-toggle="modal" data-bs-target="#modalAdicionarCompra">
+                    <i class="fas fa-shopping-cart"></i> Nova Compra
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-4 ps-2 border-bottom-0" id="mainTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="geral-tab" data-bs-toggle="tab" data-bs-target="#geral-tab-pane" type="button" role="tab" data-setor="TODOS">
+                Visão Geral
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="compras-tab" data-bs-toggle="tab" data-bs-target="#compras-tab-pane" type="button" role="tab">
+                Compras
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="historico-estoque-tab" data-bs-toggle="tab" data-bs-target="#historico-tab-pane" type="button" role="tab">
+                Histórico
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="simulacao-tab" data-bs-toggle="tab" data-bs-target="#simulacao-tab-pane" type="button" role="tab">
+                Simulação
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="estoqueTabContent">
+        
+        <div class="tab-pane fade show active" id="geral-tab-pane" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end mb-4">
+                        <div class="col-md-3">
+                            <label class="filter-label">Setor</label>
+                            <select id="filtro-setor" class="form-select fw-bold border-primary">
+                                <option value="TODOS">Todos (Visão Geral)</option>
+                                <option value="CASA">Casa (Cômodos)</option>
+                                <option value="PET">Pets</option>
+                                <option value="USUARIO">Pessoal (Usuários)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="filter-label">Filtro Específico</label>
+                            <select id="filtro-owner" class="form-select" disabled>
+                                <option value="">-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="filter-label">Período de Cadastro</label>
+                            <input type="month" id="filtro_data_estoque" class="form-control" value="{{ filtro_data_estoque_default }}">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" id="btn-limpar-data-estoque" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-sync-alt me-2"></i>Limpar Filtros
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-2 align-items-center small bg-white p-2 rounded border flex-wrap">
+                        <span class="fw-bold me-2">Legenda:</span>
+                        <div class="d-flex align-items-center me-2"><span class="legenda-box" style="background: #ffcccc;"></span>Zerado (0)</div>
+                        <div class="d-flex align-items-center me-2"><span class="legenda-box" style="background: #fff3cd;"></span>Acabando (≤ Mín)</div>
+                        <div class="d-flex align-items-center me-2"><span class="legenda-box" style="background: #d1e7dd;"></span>Disponível</div>
+                        <div class="d-flex align-items-center"><span class="legenda-box" style="background: #198754;"></span>Tranquilo (≥ Ideal)</div>
+                    </div>
+
+                    <div id="tabela-container" class="border rounded p-0 bg-white table-responsive">
+                        <div class="loading-overlay">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-3 text-muted">Carregando dados...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="compras-tab-pane" role="tabpanel">
+            <div class="card card-dashboard">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
+                        <h5 class="fw-bold text-primary mb-0">Histórico de Compras</h5>
+                        <input type="month" id="filtro_mes_ano" class="form-control w-auto" value="{{ valor_filtro_html_compras }}">
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="tabela-listas-compra" class="table table-hover w-100 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Local</th>
+                                    <th>Cidade</th>
+                                    <th>Total</th>
+                                    <th class="text-center">Tipo</th>
+                                    <th>Chave / Link</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for compra in listas_de_compra %}
+                                <tr>
+                                    <td>{{ compra.data_compra|date:"d/m/Y" }}</td>
+                                    <td class="fw-bold">{{ compra.supermercado }}</td>
+                                    <td>{{ compra.cidade }}</td>
+                                    <td class="text-success fw-bold">R$ {{ compra.valor_total|floatformat:2 }}</td>
+                                    
+                                    <td class="text-center">
+                                        {% if compra.tipo_compra == 'IMPORTADA' %}
+                                            <span class="badge bg-success" title="Importada via QR Code/Link">
+                                                <i class="fas fa-qrcode"></i>
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary" title="Cadastro Manual">
+                                                <i class="fas fa-keyboard"></i>
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if compra.url_nota %}
+                                            <div class="d-flex align-items-center gap-2">
+                                                {% if compra.chave_acesso %}
+                                                    <small class="font-monospace text-muted" style="font-size: 0.75rem;" title="{{ compra.chave_acesso }}">
+                                                        {{ compra.chave_acesso|truncatechars:20 }}...
+                                                    </small>
+                                                {% else %}
+                                                    <small class="text-muted fst-italic">Ver Nota</small>
+                                                {% endif %}
+                                                
+                                                <a href="{{ compra.url_nota }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-1 border-0" title="Abrir Nota na SEFAZ">
+                                                    <i class="fas fa-external-link-alt fa-xs"></i>
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted small">-</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if compra.lancamento_financeiro_criado %}
+                                            <span class="badge bg-success">Lançado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% if not compra.lancamento_financeiro_criado %}
+                                            <button class="btn btn-outline-success btn-lancar-despesa" data-id="{{ compra.id }}" data-valor="{{ compra.valor_total|stringformat:'f' }}" title="Lançar Financeiro">
+                                                <i class="fas fa-dollar-sign"></i>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <button class="btn btn-outline-info btn-detalhes-compra" data-id="{{ compra.id }}" title="Ver Detalhes">
+                                                <i class="fas fa-list"></i>
+                                            </button>
+
+                                            <button class="btn btn-outline-primary btn-editar-compra" data-id="{{ compra.id }}" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            
+                                            <button class="btn btn-outline-danger btn-excluir-compra" data-id="{{ compra.id }}" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">Nenhuma compra registrada neste mês.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="historico-tab-pane" role="tabpanel">
+            
+            <div class="card border-0 shadow-sm mb-3 bg-light">
+                <div class="card-body py-2">
+                    <div class="row g-2 align-items-end">
+                        
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted fw-bold mb-1">
+                                <i class="fas fa-bolt me-1"></i>Tipo de Ação
+                            </label>
+                            <select id="filtro-historico-acao" class="form-select form-select-sm border-0 shadow-sm">
+                                <option value="">Todas as Ações</option>
+                                <option value="CRIACAO" class="text-success">Criação (+)</option>
+                                <option value="BAIXA" class="text-danger">Baixa / Consumo (-)</option>
+                                <option value="EDICAO" class="text-warning">Edição</option>
+                                <option value="EXCLUSAO" class="text-dark">Exclusão</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted fw-bold mb-1">
+                                <i class="fas fa-user-shield me-1"></i>Feito por
+                            </label>
+                            <select id="filtro-historico-user" class="form-select form-select-sm border-0 shadow-sm">
+                                <option value="">Todos os Usuários</option>
+                                {% for u in todos_usuarios %}
+                                    <option value="{{ u.id }}">{{ u.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 text-end align-self-center">
+                            <small class="text-muted fst-italic" style="font-size: 0.8rem;">
+                                <i class="fas fa-info-circle"></i> Os filtros do topo (Imóvel/Setor) também filtram esta lista.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="historico-estoque-container" class="card card-dashboard p-3 border-0 shadow-sm">
+                <div class="loading-overlay">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2 text-muted small">Carregando histórico...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="simulacao-tab-pane" role="tabpanel">
+            <div id="simulacao-container" class="card card-dashboard p-3">
+                <div class="loading-overlay"><div class="spinner-border text-primary"></div></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarCasa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="formAdicionarCasa" action="{% url 'estoque:gerenciar_estoque' %}" class="form-ajax">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="casa">
+                
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-home me-2"></i>Novo Item (Casa)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div id="wrapper-imovel-modal" class="mb-3 bg-light p-2 rounded border border-success">
+                        <label class="small fw-bold text-success mb-1">Qual Imóvel?</label>
+                        <select name="imovel" id="modal-select-imovel" class="form-select">
+                            <option value="">Selecione...</option>
+                            {% for imovel in imoveis_ativos %}
+                                <option value="{{ imovel.id }}">{{ imovel.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="small fw-bold">Cômodo</label>
+                        <select name="comodo" id="modal-select-comodo" class="form-select" disabled>
+                            <option value="">Aguardando Imóvel...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-2">
+                         <label class="small fw-bold">Local</label>
+                         <select name="localizacao" id="modal-select-local" class="form-select" disabled>
+                            <option value="">-</option>
+                         </select>
+                    </div>
+
+                    <div class="mb-2"><label class="small fw-bold">Nome *</label>{{ form_estoque.nome_item }}</div>
+                    <div class="mb-2"><label class="small fw-bold">Categoria</label>{{ form_estoque.categoria }}</div>
+                    
+                    <div class="row g-2 mb-2">
+                        <div class="col-4"><label class="small fw-bold">Unid.</label>{{ form_estoque.unidade }}</div>
+                        <div class="col-8">
+                            <label class="small fw-bold">Qtd.</label>
+                            <div class="input-group">
+                                <input type="number" name="quantidade" class="form-control" placeholder="1" required>
+                                <span class="input-group-text fw-bold bg-light span-unidade">UN</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2 mb-2">
+                        <div class="col-6" id="wrapper-preco-unitario">
+                             <label class="small fw-bold">Preço Unitário</label>
+                             <div class="input-group">
+                                 <span class="input-group-text text-muted">R$</span>
+                                 <input type="text" name="preco_unitario" class="form-control" placeholder="0,00">
+                             </div>
+                        </div>
+                        <div class="col-6"><label class="small fw-bold">Validade</label>{{ form_estoque.data_validade }}</div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><label class="small fw-bold">Mínimo</label><input type="text" name="estoque_minimo" class="form-control" value="1"></div>
+                        <div class="col-6"><label class="small fw-bold">Ideal</label><input type="text" name="estoque_ideal" class="form-control" value="2"></div>
+                    </div>
+
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success w-100">Salvar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarPet" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="formAdicionarPet" action="{% url 'estoque:gerenciar_estoque' %}" class="form-ajax">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="pet">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="fas fa-paw me-2"></i>Novo Item (Pet)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="small fw-bold">Para qual Pet? *</label>
+                        <select name="pet_id" class="form-select" required>
+                            <option value="" selected disabled>Selecione...</option>
+                            {% for p in todos_pets %}<option value="{{ p.id }}">{{ p.nome_pet }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="small fw-bold">Nome *</label>{{ form_estoque.nome_item }}</div>
+                    <div class="mb-2"><label class="small fw-bold">Categoria</label>{{ form_estoque.categoria }}</div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4"><label class="small fw-bold">Unid.</label>{{ form_estoque.unidade }}</div>
+                        <div class="col-8">
+                            <label class="small fw-bold">Qtd.</label>
+                            <div class="input-group">
+                                {{ form_estoque.quantidade }}
+                                <span class="input-group-text fw-bold bg-light span-unidade">UNID</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="small fw-bold">Preço (Opcional)</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-muted">R$</span>
+                                {{ form_estoque.preco_unitario }}
+                            </div>
+                        </div>
+                        <div class="col-6"><label class="small fw-bold">Validade</label>{{ form_estoque.data_validade }}</div>
+                    </div>
+                    <div class="row g-2 mb-2 bg-light p-2 rounded border">
+                        <div class="col-6"><label class="small fw-bold text-danger">Mínimo</label><input type="text" name="estoque_minimo" class="form-control border-danger input-minimo" value="1"></div>
+                        <div class="col-6"><label class="small fw-bold text-success">Ideal</label><input type="text" name="estoque_ideal" class="form-control border-success input-ideal" value="1"></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-warning w-100">Salvar Item Pet</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarUsuario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="formAdicionarUsuario" action="{% url 'estoque:gerenciar_estoque' %}" class="form-ajax">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="usuario">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-user me-2"></i>Item Pessoal</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="small fw-bold">Dono *</label>
+                        <select name="usuario_id" class="form-select" required>
+                            <option value="{{ request.user.id }}" selected>Eu ({{ request.user.username }})</option>
+                            {% for u in todos_usuarios %}{% if u.id != request.user.id %}<option value="{{ u.id }}">{{ u.username }}</option>{% endif %}{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="small fw-bold">Nome *</label>{{ form_estoque.nome_item }}</div>
+                    <div class="mb-2"><label class="small fw-bold">Categoria</label>{{ form_estoque.categoria }}</div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Quantidade</label>
+                        <div class="input-group">
+                            {{ form_estoque.quantidade }}
+                            <span class="input-group-text fw-bold bg-light span-unidade">UNID</span>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2 bg-light p-2 rounded border">
+                        <div class="col-6"><label class="small fw-bold text-danger">Mínimo</label><input type="text" name="estoque_minimo" class="form-control border-danger input-minimo" value="1"></div>
+                        <div class="col-6"><label class="small fw-bold text-success">Ideal</label><input type="text" name="estoque_ideal" class="form-control border-success input-ideal" value="1"></div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-info text-white w-100">Salvar Item Pessoal</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarCompra" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="formAdicionarCompra" action="{% url 'estoque:registrar_compra_ajax' %}" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="itens_triagem_json" id="itensTriagemJson">
+                <input type="hidden" name="url_nota" id="id_url_nota_hidden">
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="fas fa-shopping-cart me-2"></i>Nova Compra</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <ul class="nav nav-tabs nav-fill" id="compraTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active rounded-0" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button">
+                                <i class="fas fa-keyboard me-2"></i>Manual / Rápido
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link rounded-0" id="import-mode-tab" data-bs-toggle="tab" data-bs-target="#import-pane" type="button">
+                                <i class="fas fa-qrcode me-2"></i>Importar Nota (SP)
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        
+                        <div class="tab-pane fade show active p-3" id="manual-pane">
+                            <div class="alert alert-light border small text-muted mb-3">
+                                <i class="fas fa-info-circle text-primary"></i> 
+                                Preencha os dados abaixo. Itens importados aparecerão na triagem após leitura.
+                            </div>
+                            
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-6">
+                                    <label class="small fw-bold">Local de Compra *</label>
+                                    {{ form_lista_compra.supermercado }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small fw-bold">Cidade *</label>
+                                    {{ form_lista_compra.cidade }}
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="small fw-bold">Data *</label>
+                                    {{ form_lista_compra.data_compra }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small fw-bold">Total (R$) *</label>
+                                    {{ form_lista_compra.valor_total }}
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div id="area-triagem-container" class="d-none">
+                                <h6 class="fw-bold text-success mb-2">
+                                    <i class="fas fa-dolly me-2"></i>Triagem de Itens
+                                </h6>
+                                <p class="small text-muted mb-2">Defina para onde vão os itens.</p>
+                                
+                                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                    <table class="table table-sm table-bordered table-hover small align-middle">
+                                        <thead class="table-light sticky-top">
+                                            <tr>
+                                                <th>Produto (Nota)</th>
+                                                <th width="70">Qtd</th>
+                                                <th width="90">Total</th>
+                                                <th>Destino (Onde guardar?)</th>
+                                                <th>Local</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbody-triagem">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="import-pane">
+                            <div id="step-leitor" class="text-center p-3">
+                                <div class="alert alert-info small mb-2">
+                                    <i class="fas fa-camera me-1"></i> Aponte a câmera ou cole a chave abaixo.
+                                </div>
+                                <div id="reader-modal" style="width: 100%; height: 250px; background: #000; margin: 0 auto; border-radius: 8px;"></div>
+                                
+                                <div class="d-flex align-items-center my-3">
+                                    <hr class="flex-grow-1"> <span class="mx-2 text-muted small fw-bold">OU DIGITE A CHAVE</span> <hr class="flex-grow-1">
+                                </div>
+                                
+                                <div class="mb-2 text-start">
+                                    <label class="form-label small fw-bold text-muted">Chave de Acesso (44 dígitos) ou Link:</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light" id="icon-status-input">
+                                            <i class="fas fa-barcode text-muted"></i>
+                                        </span>
+                                        <input type="text" id="urlNotaInput" class="form-control font-monospace" placeholder="Ex: 3525..." maxlength="200" autocomplete="off">
+                                        <button class="btn btn-outline-primary" type="button" id="btn-buscar-nota">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="status-leitura-container" class="mt-2 p-2 rounded d-none" style="background-color: #f8f9fa; border: 1px dashed #ccc;">
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
+                                            <div id="status-spinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
+                                            <span id="status-texto" class="small fw-bold text-muted">Aguardando chave...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="step-triagem" class="d-none p-3 text-center">
+                                <h4 class="text-success"><i class="fas fa-check-circle"></i> Nota Lida!</h4>
+                                <p>Os itens foram carregados na aba <strong>Manual / Rápido</strong>.</p>
+                                <button class="btn btn-primary" type="button" onclick="new bootstrap.Tab(document.querySelector('#manual-tab')).show()">
+                                    Ver Itens e Salvar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4">
+                        <i class="fas fa-save me-1"></i> FINALIZAR COMPRA
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDarBaixa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form id="formDarBaixa" class="form-ajax">
+                {% csrf_token %}
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-arrow-down me-2"></i>Registrar Consumo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <h5 class="text-center fw-bold text-dark mb-3" id="baixa-nome-item">Carregando...</h5>
+
+                    <div class="card bg-light border-0 mb-3">
+                        <div class="card-body py-2">
+                            <div class="row text-center align-items-center">
+                                <div class="col-5 border-end">
+                                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Atual</small>
+                                    <div class="h4 fw-bold text-primary mb-0" id="baixa-display-atual">0</div>
+                                </div>
+                                <div class="col-2">
+                                    <i class="fas fa-arrow-right text-muted"></i>
+                                </div>
+                                <div class="col-5">
+                                    <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Final</small>
+                                    <div class="h4 fw-bold text-success mb-0" id="baixa-display-final">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Quanto foi consumido?</label>
+                        <div class="input-group input-group-lg">
+                            <button class="btn btn-outline-secondary" type="button" onclick="ajustarBaixa(-1)">-</button>
+                            
+                            <input type="number" name="quantidade" id="baixa-input-qtd" class="form-control text-center fw-bold" placeholder="0" step="any" min="0">
+                            
+                            <button class="btn btn-outline-secondary" type="button" onclick="ajustarBaixa(1)">+</button>
+                            <span class="input-group-text small bg-white" id="baixa-span-unidade">UN</span>
+                        </div>
+                        <div id="msg-erro-baixa" class="text-danger small fw-bold mt-2 text-center d-none">
+                            <i class="fas fa-exclamation-circle"></i> Quantidade maior que o estoque!
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="hidden-estoque-atual"> 
+                </div>
+
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="btn-confirma-baixa" class="btn btn-danger px-4 fw-bold" disabled>
+                        Confirmar Baixa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalLancarDespesa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formLancarDespesa" method="post">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Lançar Financeiro</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <small class="text-muted text-uppercase fw-bold">Valor da Compra</small>
+                        <h2 class="text-success fw-bold display-6" id="valor-despesa-modal">R$ 0,00</h2>
+                    </div>
+                    
+                    <div class="card bg-light border-0 p-3">
+                        <div class="mb-3">
+                            <label class="small fw-bold text-muted mb-1">1. Quem vai pagar?</label>
+                            {{ form_lancar_despesa.filtro_usuario }}
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="small fw-bold text-muted mb-1">2. Qual conta?</label>
+                            {{ form_lancar_despesa.conta }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success w-100 fw-bold">
+                        <i class="fas fa-check me-2"></i> Confirmar Lançamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalConfirmarExclusao" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white"><h6 class="modal-title">Excluir?</h6></div>
+            <div class="modal-body text-center"><p id="modalConfirmarTexto" class="mb-0">Tem certeza?</p></div>
+            <div class="modal-footer p-2 bg-light border-0">
+                <form id="formConfirmacao" class="w-100 d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary flex-fill" data-bs-dismiss="modal">Não</button>
+                    <button type="submit" class="btn btn-danger flex-fill">Sim</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarItemCasa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formEditarItemCasa" class="form-ajax">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-home me-2"></i>Editar (Casa)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-body p-3">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Nome</label>
+                                <input type="text" name="nome_item" class="form-control fw-bold text-dark">
+                            </div>
+                            <div class="mb-0">
+                                <label class="small fw-bold text-muted">Categoria</label>
+                                {{ form_estoque.categoria }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-body p-3">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="small fw-bold text-muted">Cômodo</label>
+                                    {{ form_estoque.comodo }}
+                                </div>
+                                <div class="col-6">
+                                    <label class="small fw-bold text-muted">Local</label>
+                                    {{ form_estoque.localizacao }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-body p-3">
+                            <div class="row g-2 mb-2 align-items-end">
+                                <div class="col-4">
+                                    <label class="small fw-bold text-muted">Unid.</label>
+                                    {{ form_estoque.unidade }}
+                                </div>
+                                <div class="col-8">
+                                    <label class="small fw-bold text-muted">Quantidade</label>
+                                    <div class="input-group">
+                                        <input type="number" name="quantidade" class="form-control fw-bold">
+                                        <span class="input-group-text bg-white small span-unidade">UN</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2">
+                                <div class="col-6 wrapper-preco-box">
+                                    <label class="small fw-bold text-muted">Preço Unitário</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text text-muted">R$</span>
+                                        <input type="text" name="preco_unitario" class="form-control">
+                                    </div>
+                                    <div class="simulador-preco-container"></div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="small fw-bold text-muted">Validade</label>
+                                    <input type="date" name="data_validade" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6"><label class="small fw-bold text-danger">Mínimo</label><input type="text" name="estoque_minimo" class="form-control border-danger"></div>
+                        <div class="col-6"><label class="small fw-bold text-success">Ideal</label><input type="text" name="estoque_ideal" class="form-control border-success"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white">
+                    <button type="submit" class="btn btn-primary w-100">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarItemPet" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formEditarItemPet" class="form-ajax">
+                {% csrf_token %}
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark"><i class="fas fa-paw me-2"></i>Editar (Pet)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    
+                    <div class="mb-3 p-2 bg-warning bg-opacity-25 rounded border border-warning">
+                        <label class="small fw-bold text-dark mb-1">Pertence a qual Pet?</label>
+                        <select name="pet_id" class="form-select form-select-sm fw-bold">
+                            {% for p in todos_pets %}
+                                <option value="{{ p.id }}">{{ p.nome_pet }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-body p-3">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Nome</label>
+                                <input type="text" name="nome_item" class="form-control fw-bold text-dark">
+                            </div>
+                            <div class="mb-0">
+                                <label class="small fw-bold text-muted">Categoria</label>
+                                {{ form_estoque.categoria }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-body p-3">
+                            <div class="row g-2 mb-2 align-items-end">
+                                <div class="col-4">
+                                    <label class="small fw-bold text-muted">Unid.</label>
+                                    {{ form_estoque.unidade }}
+                                </div>
+                                <div class="col-8">
+                                    <label class="small fw-bold text-muted">Quantidade</label>
+                                    <div class="input-group">
+                                        <input type="number" name="quantidade" class="form-control fw-bold">
+                                        <span class="input-group-text bg-white small span-unidade">UN</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2">
+                                <div class="col-6 wrapper-preco-box">
+                                    <label class="small fw-bold text-muted">Preço Unitário</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text text-muted">R$</span>
+                                        <input type="text" name="preco_unitario" class="form-control">
+                                    </div>
+                                    <div class="simulador-preco-container"></div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="small fw-bold text-muted">Validade</label>
+                                    <input type="date" name="data_validade" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6"><label class="small fw-bold text-danger">Mínimo</label><input type="text" name="estoque_minimo" class="form-control border-danger"></div>
+                        <div class="col-6"><label class="small fw-bold text-success">Ideal</label><input type="text" name="estoque_ideal" class="form-control border-success"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white">
+                    <button type="submit" class="btn btn-warning w-100">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarItemUsuario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formEditarItemUsuario" class="form-ajax">
+                {% csrf_token %}
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-user me-2"></i>Editar (Pessoal)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    
+                    <div class="mb-3 p-2 bg-info bg-opacity-25 rounded border border-info">
+                        <label class="small fw-bold text-dark mb-1">Pertence a quem?</label>
+                        <select name="usuario_id" class="form-select form-select-sm fw-bold">
+                            {% for u in todos_usuarios %}
+                                <option value="{{ u.id }}">{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-body p-3">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Nome</label>
+                                <input type="text" name="nome_item" class="form-control fw-bold text-dark">
+                            </div>
+                            <div class="mb-0">
+                                <label class="small fw-bold text-muted">Categoria</label>
+                                {{ form_estoque.categoria }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-body p-3">
+                            <div class="row g-2 mb-2 align-items-end">
+                                <div class="col-12">
+                                    <label class="small fw-bold text-muted">Quantidade (Apenas Inteiros)</label>
+                                    <div class="input-group">
+                                        <input type="number" name="quantidade" class="form-control fw-bold" step="1" placeholder="1">
+                                        
+                                        <div style="width: 100px;">
+                                            {{ form_estoque.unidade }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2 d-none">
+                                <div class="col-6 wrapper-preco-box">
+                                    <input type="text" name="preco_unitario" class="form-control">
+                                    <div class="simulador-preco-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6"><label class="small fw-bold text-danger">Mínimo</label><input type="text" name="estoque_minimo" class="form-control border-danger"></div>
+                        <div class="col-6"><label class="small fw-bold text-success">Ideal</label><input type="text" name="estoque_ideal" class="form-control border-success"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white">
+                    <button type="submit" class="btn btn-info text-white w-100 fw-bold">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetalhesCompra" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-receipt me-2"></i>Detalhes da Compra</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h5 id="detalhe-mercado" class="fw-bold"></h5>
+                <p class="text-muted small" id="detalhe-data"></p>
+                
+                <table class="table table-sm table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produto</th>
+                            <th>Qtd</th>
+                            <th>Unit.</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-detalhes-compra">
+                        </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarCompra" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarCompra">
+                {% csrf_token %}
+                <input type="hidden" id="id_compra_editar" name="compra_id">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Editar Dados da Compra</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Supermercado</label>
+                        <input type="text" name="supermercado" id="edit_supermercado" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Cidade</label>
+                        <input type="text" name="cidade" id="edit_cidade" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Data da Compra</label>
+                        <input type="date" name="data_compra" id="edit_data_compra" class="form-control" required>
+                    </div>
+                    <div class="alert alert-warning small">
+                        <i class="fas fa-exclamation-triangle"></i> Para editar os itens/produtos, use a opção "Ver Detalhes" > "Editar Itens" na tela principal.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script>
+    // Definição das URLs Globais para o arquivo JS
+    window.URL_TABELA_ESTOQUE = "{% url 'estoque:tabela_estoque_unificada_partial' %}"; 
+    window.URL_FILTRO_OPCOES = "{% url 'estoque:get_filtro_opcoes' %}";
+    window.URL_CATEGORIAS = "{% url 'estoque:get_categorias_por_setor' %}";
+    window.URL_GET_LOCALIZACOES = "{% url 'estoque:get_localizacoes_json' %}";
+    window.URL_GET_COMODOS = "{% url 'estoque:get_comodos_por_imovel' %}";
+    window.URL_ABA_HISTORICO_ESTOQUE = "{% url 'estoque:aba_historico_estoque_partial' %}";
+    window.URL_ABA_SIMULACAO = "{% url 'estoque:aba_simulacao_partial' %}";
+    window.URL_LER_NOTA = "{% url 'estoque:ler_nota_ajax' %}";
+    window.URL_GET_COMPRA_JSON = "{% url 'estoque:get_compra_json' 0 %}".replace('/0/', '/');
+    window.URL_GET_COMPRA_ITENS = "{% url 'estoque:get_compra_itens_json' 0 %}".replace('/0/', '/');
+    window.URL_EDITAR_COMPRA = "{% url 'estoque:editar_compra_ajax' 0 %}".replace('/0/', '/');
+    window.URL_LANCAR_FINANCEIRO = "{% url 'estoque:lancar_despesa_compra_ajax' 0 %}".replace('/0/', '/');
+    window.URL_EXCLUIR_COMPRA = "{% url 'estoque:deletar_compra_ajax' 0 %}".replace('/0/', '/');
+    
+    window.DATATABLES_LANGUAGE_URL = "{% static 'js/datatables-pt-br.json' %}";
+</script>
+
+<script src="{% static 'js/gerenciar_estoque.js' %}"></script>
+{% endblock %}

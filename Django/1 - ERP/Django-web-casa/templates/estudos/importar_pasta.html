@@ -1,0 +1,220 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    /* Layout Principal */
+    .import-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 80vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .import-card {
+        background: white;
+        width: 100%;
+        max-width: 700px;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+
+    /* Cabeçalho */
+    .card-header {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 2px solid #417690; /* Cor Padrão (Local) */
+        padding-bottom: 10px;
+        font-size: 22px;
+    }
+
+    /* Tema Telegram (Roxo) */
+    .theme-telegram .card-header {
+        border-bottom-color: #c586c0;
+        color: #5a3263;
+    }
+
+    /* Textos Informativos */
+    .course-info {
+        font-size: 16px;
+        color: #555;
+        margin: 15px 0;
+    }
+
+    .course-title {
+        font-size: 18px;
+        color: #417690;
+        font-weight: bold;
+    }
+
+    .theme-telegram .course-title {
+        color: #c586c0;
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        padding: 12px;
+        border-left: 4px solid #ccc;
+        margin-bottom: 25px;
+        font-size: 13px;
+        color: #666;
+        line-height: 1.5;
+    }
+
+    /* Formulários */
+    .form-group {
+        margin: 25px 0;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #f9f9f9;
+        box-sizing: border-box; /* Garante que o padding não estoure a largura */
+        transition: border-color 0.3s;
+    }
+
+    .form-input:focus {
+        border-color: #417690;
+        outline: none;
+        background: #fff;
+    }
+
+    .form-help {
+        font-size: 12px;
+        color: #777;
+        margin-top: 6px;
+    }
+
+    /* Checkbox Container */
+    .checkbox-container {
+        margin: 20px 0;
+        background: #f0f7fb;
+        padding: 15px;
+        border-radius: 4px;
+        border-left: 4px solid #417690;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+
+    .theme-telegram .checkbox-container {
+        border-left-color: #c586c0;
+        background: #fdf5ff;
+    }
+
+    .checkbox-input {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        cursor: pointer;
+    }
+
+    /* Botões */
+    .button-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        border: none;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+
+    .btn-cancel {
+        color: #666;
+        border: 1px solid #ccc;
+        background: transparent;
+    }
+
+    .btn-submit {
+        background: #417690;
+        color: white;
+    }
+
+    .theme-telegram .btn-submit {
+        background: #c586c0;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="import-wrapper">
+    
+    <div class="import-card {% if modo == 'telegram' %}theme-telegram{% endif %}">
+        
+        <h2 class="card-header">
+            {{ titulo_tela }}
+        </h2>
+        
+        <p class="course-info">
+            Curso Alvo: <span class="course-title">{{ curso.titulo }}</span>
+        </p>
+        
+        <div class="info-box">
+            💡 {{ ajuda_tela }}
+        </div>
+
+        <form method="post" action="">
+            {% csrf_token %}
+            
+            <input type="hidden" name="action" value="{% if modo == 'local' %}acao_importar_local{% else %}acao_upload_telegram{% endif %}" />
+            <input type="hidden" name="apply" value="1" />
+            <input type="hidden" name="_selected_action" value="{{ curso.pk }}" />
+
+            <div class="form-group">
+                <label class="form-label">Caminho da Pasta (Windows):</label>
+                <input type="text" name="caminho_pasta" class="form-input"
+                       placeholder="Ex: C:\Users\DIEGOBONANI\OneDrive\Desktop\Django-web-casa\media\catalogo\IDIOMAS\Curso Tal" 
+                       required autofocus>
+                <p class="form-help">
+                    Cole o endereço completo. O sistema buscará Módulos (subpastas) e Aulas (arquivos) automaticamente.
+                </p>
+            </div>
+
+            <label class="checkbox-container">
+                <input type="checkbox" name="simular" checked class="checkbox-input">
+                <div>
+                    <strong style="font-size: 15px;">Apenas Simular (Teste)</strong>
+                    <div style="font-size: 13px; color: #555;">Marque para ver a lista de arquivos antes de executar a ação real.</div>
+                </div>
+            </label>
+
+            <div class="button-row">
+                <a href="/admin/estudos/curso/" class="btn btn-cancel">Cancelar</a>
+                
+                <button type="submit" class="btn btn-submit">
+                    {% if modo == 'telegram' %}☁️ Iniciar Upload{% else %}📂 Ler Pasta{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

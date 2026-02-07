@@ -1,0 +1,17 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Meu Painel{% endblock %}
+
+{% block sidebar %}
+  {% include 'partials/sidebar_usuario.html' %}
+{% endblock %}
+
+{% block main_content %}
+  <h1>Bem-vindo ao seu painel, {{ user.username }}!</h1>
+  <p>Aqui você pode ver suas atividades e responsabilidades.</p>
+  <p>Em breve, esta área terá mais funcionalidades.</p>
+{% endblock %}
+
+{% block scripts %}
+  {# Este bloco pode ficar vazio por enquanto #}
+{% endblock %}

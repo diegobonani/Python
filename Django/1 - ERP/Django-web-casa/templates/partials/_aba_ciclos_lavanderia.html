@@ -1,0 +1,248 @@
+{% load i18n %}
+{% load static %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Painel de Controle de Lavagem</h4>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdicionarCesto">
+    <i class="fas fa-plus"></i> Novo Cesto de Roupas
+  </button>
+</div>
+
+<hr>
+
+<h5 class="mb-3"><i class="fas fa-sync-alt fa-spin me-2 text-primary"></i>Ciclos Ativos</h5>
+
+{% for ciclo in ciclos_ativos %}
+<div class="card mb-3 shadow-sm">
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Ciclo #{{ ciclo.id }} ({{ ciclo.equipamento.nome }})</h5>
+    <strong>Status: {{ ciclo.get_status_processo_display }}</strong>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-5">
+        <p><strong>Iniciado em:</strong> {{ ciclo.data_hora_inicio|date:"d/m/Y H:i" }}</p>
+        <p><strong>Responsável:</strong> {{ ciclo.usuario_responsavel.username }}</p>
+        <p><strong>Cestos incluídos:</strong></p>
+        <ul class="list-group list-group-flush mb-3">
+          {% for cesto in ciclo.cestos.all %}
+          <li class="list-group-item">{{ cesto }} ({{ cesto.peso_kg|floatformat:"1g" }}kg)</li>
+          {% endfor %}
+        </ul>
+        <strong class="text-success">Peso Total: {{ ciclo.peso_total_lavado|floatformat:"1g" }}kg</strong>
+      </div>
+      <div class="col-md-7">
+        <p><strong>Próxima Etapa (Sincronização Manual):</strong></p>
+        <div class="btn-group-vertical w-100" role="group">
+          {% if ciclo.status_processo == 'LAVANDO' %}
+          <button class="btn btn-outline-secondary btn-avancar-etapa" data-ciclo-id="{{ ciclo.pk }}" data-novo-status="ENXAGUANDO">
+            <i class="fas fa-water me-2"></i>Mover para Enxágue
+          </button>
+          {% endif %}
+          {% if ciclo.status_processo in 'LAVANDO,ENXAGUANDO' %}
+          <button class="btn btn-outline-secondary btn-avancar-etapa" data-ciclo-id="{{ ciclo.pk }}" data-novo-status="CENTRIFUGANDO">
+            <i class="fas fa-sync-alt me-2"></i>Mover para Centrifugação
+          </button>
+          {% endif %}
+          {% if ciclo.status_processo in 'LAVANDO,ENXAGUANDO,CENTRIFUGANDO' %}
+          <button class="btn btn-outline-info btn-avancar-etapa" data-ciclo-id="{{ ciclo.pk }}" data-novo-status="SECANDO_VARAL">
+            <i class="fas fa-sun me-2"></i>Mover para Secagem (Varal)
+          </button>
+          {% endif %}
+        </div>
+        
+        <button class="btn btn-success w-100 mt-3 btn-avancar-etapa" data-ciclo-id="{{ ciclo.pk }}" data-novo-status="CONCLUIDO">
+          <i class="fas fa-check-circle me-2"></i>Finalizar Ciclo (Roupas Guardadas)
+        </button>
+        
+        <hr>
+        <p><strong>Produtos Consumidos:</strong></p>
+        <ul class="list-group list-group-flush mb-2">
+            {% for consumo in ciclo.produtoconsumidolavagem_set.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center p-1">
+              <small>{{ consumo.produto_estoque.nome_item }} ({{ consumo.quantidade_consumida }})</small>
+              <button class="btn btn-outline-danger btn-sm btn-remover-produto" data-consumo-id="{{ consumo.pk }}" title="Devolver ao estoque">
+                  <i class="fas fa-undo"></i>
+              </button>
+            </li>
+            {% empty %}
+            <li class="list-group-item p-1"><small class="text-muted">Nenhum produto adicionado.</small></li>
+            {% endfor %}
+        </ul>
+        
+        {# CORREÇÃO AQUI (Linha 81 do seu traceback) #}
+        <form class="d-flex" id="formAdicionarProdutoCiclo-{{ ciclo.pk }}" method="POST" action="{% url 'lavanderia:adicionar_produto_ciclo' ciclo.pk %}">
+            {% csrf_token %}
+            <div class="flex-grow-1 me-2">
+                {{ form_produto.produto_estoque }}
+            </div>
+            <div style="max-width: 100px;">
+                {{ form_produto.quantidade_consumida }}
+            </div>
+            <button type="submit" class="btn btn-primary ms-2 align-self-center">Add</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% empty %}
+<div class="alert alert-light text-center">Nenhum ciclo em andamento.</div>
+{% endfor %}
+
+<hr class="my-4">
+
+<h5 class="mb-3"><i class="fas fa-pause-circle me-2 text-muted"></i>Cestos Aguardando na Fila</h5>
+
+{% if melhor_sugestao %}
+<div class="alert alert-success">
+    <h5 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Sugestão Inteligente do Dia</h5>
+    <p>A lavagem de <strong>{{ melhor_sugestao.nome }}</strong> ({{ melhor_sugestao.peso_total|floatformat:"1g" }}kg) é a mais eficiente hoje para otimizar o uso da sua máquina de {{ capacidade_maquina|floatformat:"1g" }}kg.</p>
+    <button class="btn btn-success mt-2 btn-iniciar-ciclo" data-bs-toggle="modal" data-bs-target="#modalIniciarCiclo" data-tipo-carga="{{ melhor_sugestao.tipo_id }}">
+        <i class="fas fa-play me-2"></i>Iniciar Ciclo com esta Sugestão
+    </button>
+</div>
+{% endif %}
+
+<div class="row">
+    {% for tipo_id, dados in cestos_agrupados.items %}
+        {% if dados.cestos %}
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>{{ dados.nome }}</strong>
+                    {% if not melhor_sugestao or melhor_sugestao.tipo_id != tipo_id %}
+                        {% if dados.peso_total <= capacidade_maquina %}
+                        <button class="btn btn-outline-primary btn-sm btn-iniciar-ciclo" data-bs-toggle="modal" data-bs-target="#modalIniciarCiclo" data-tipo-carga="{{ tipo_id }}">
+                            <i class="fas fa-play me-1"></i> Lavar ({{ dados.peso_total|floatformat:"1g" }}kg)
+                        </button>
+                        {% else %}
+                        <span class="badge bg-danger" title="Carga muito pesada para a máquina de {{ capacidade_maquina|floatformat:"1g" }}kg. Edite ou remova um cesto.">
+                            <i class="fas fa-exclamation-triangle me-1"></i> {{ dados.peso_total|floatformat:"1g" }}kg
+                        </span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar {% if dados.percentual > 100 %}bg-danger{% endif %}" 
+                             role="progressbar" 
+                             style="--bs-progress-bar-width: {{ dados.percentual }}%;" 
+                             aria-valuenow="{{ dados.peso_total }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="{{ capacidade_maquina }}">{{ dados.peso_total|floatformat:"1g" }}kg</div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for cesto in dados.cestos %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span>
+                                <i class="fas fa-shopping-basket me-2"></i>{{ cesto }}
+                                {% if cesto.prioridade %}<span class="badge bg-danger ms-2">Urgente</span>{% endif %}
+                                <small class="text-muted">({{ cesto.peso_kg|floatformat:"1g" }}kg)</small>
+                                <br>
+                                <small class="badge bg-{% if cesto.dias_aguardando > 7 %}danger{% elif cesto.dias_aguardando > 3 %}warning{% else %}secondary{% endif %}">
+                                    há {{ cesto.dias_aguardando }} {% if cesto.dias_aguardando == 1 %}dia{% else %}dias{% endif %}
+                                </small>
+                            </span>
+                            <div>
+                                <button class="btn btn-primary btn-sm btn-editar-cesto" data-bs-toggle="modal" data-bs-target="#modalEditarCesto" data-id="{{ cesto.pk }}" title="Editar Cesto"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-danger btn-sm btn-excluir-cesto" data-id="{{ cesto.pk }}" title="Excluir Cesto"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<div class="modal fade" id="modalAdicionarCesto" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      {# CORREÇÃO AQUI (Linha 200) #}
+      <form id="formAdicionarCesto" method="post" action="{% url 'lavanderia:aba_ciclos_hoje_partial' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Registrar Novo Cesto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ form_cesto.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Adicionar Cesto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalEditarCesto" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formEditarCesto" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Cesto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ form_editar_cesto.as_p }}
+          <div id="form-errors-editar-cesto" class="alert alert-danger mt-3" style="display: none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Mudanças</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalIniciarCiclo" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      {# CORREÇÃO AQUI (Linha 223) #}
+      <form id="formIniciarCiclo" method="post" action="{% url 'lavanderia:iniciar_ciclo_lavagem' %}">
+        {% csrf_token %}
+        <input type="hidden" name="tipo_carga" id="input-tipo-carga" value="">
+        <div class="modal-header">
+          <h5 class="modal-title">Iniciar Novo Ciclo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <p>Você está prestes a iniciar um ciclo. Confirme o equipamento:</p>
+            {{ form_iniciar_ciclo.as_p }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Confirmar e Iniciar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalConfirmarExclusao" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmarLabel">Confirmar Ação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="modalConfirmarTexto">Você tem certeza?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="formConfirmacao" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Confirmar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

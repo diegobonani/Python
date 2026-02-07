@@ -1,0 +1,29 @@
+<table id="tabela-financas" class="table table-striped table-bordered" style="width:100%">
+  <thead>
+    <tr>
+      <th>Descrição</th>
+      <th>Conta</th>
+      <th>Categoria</th>
+      <th>Tipo</th>
+      <th>Valor</th>
+      <th>Data</th>
+      <th class="text-end">Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for lancamento in lancamentos %}
+      <tr data-id="{{ lancamento.pk }}">
+        <td>{{ lancamento.nome }}</td>
+        <td>{{ lancamento.conta.nome }}</td>
+        <td>{{ lancamento.categoria.nome|default:"N/A" }}</td>
+        <td><span class="badge bg-{% if lancamento.tipo == 'Receitas' %}success{% else %}danger{% endif %}">{{ lancamento.tipo }}</span></td>
+        <td>R$ {{ lancamento.valor|floatformat:"2g" }}</td>
+        <td>{{ lancamento.data_registro|date:"d/m/Y" }}</td>
+        <td class="text-end">
+            <button class="btn btn-primary btn-sm btn-editar-lancamento" data-id="{{ lancamento.pk }}" title="Editar"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-sm btn-excluir-lancamento" data-id="{{ lancamento.pk }}" title="Excluir"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,64 @@
+<div class="card mb-4">
+  <div class="card-body">
+    <form id="form-filtro-historico">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="data_inicio" class="form-label">De:</label>
+          <input type="date" id="data_inicio" name="data_inicio" class="form-control" value="{{ data_inicio }}">
+        </div>
+        <div class="col-md-3">
+          <label for="data_fim" class="form-label">Até:</label>
+          <input type="date" id="data_fim" name="data_fim" class="form-control" value="{{ data_fim }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Períodos Rápidos:</label>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-periodo" data-periodo="hoje">Hoje</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-periodo" data-periodo="semana">Últimos 7 dias</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary btn-periodo" data-periodo="mes">Este Mês</button>
+            </div>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-success w-100"><i class="fas fa-search"></i> Buscar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table id="tabela-historico-lavanderia" class="table table-striped table-bordered" style="width:100%">
+  <thead>
+    <tr>
+      <th>Data e Hora</th>
+      <th>Equipamento</th>
+      <th>Responsável</th>
+      <th>Duração</th>
+      <th>Produtos Consumidos</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ciclo in ciclos %}
+      <tr>
+        <td>{{ ciclo.data_hora_inicio|date:"d/m/Y H:i" }}</td>
+        <td>{{ ciclo.equipamento.nome }}</td>
+        <td>{{ ciclo.usuario_responsavel.username|default:"N/A" }}</td>
+        <td>{{ ciclo.duracao_minutos }} min</td>
+        <td>
+          {% for produto_consumido in ciclo.produtos_consumidos.all %}
+            <span class="badge bg-secondary">{{ produto_consumido.nome_item|default:produto_consumido.item_casa.nome_item_casa }}</span>
+          {% empty %}
+            Nenhum
+          {% endfor %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+  // Inicializa o DataTable nesta tabela
+  $('#tabela-historico-lavanderia').DataTable({
+    language: { url: 'https://cdn.datatables.net/plug-ins/2.0.8/i18n/pt-BR.json' },
+    "order": [[ 0, "desc" ]]
+  });
+</script>

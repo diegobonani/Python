@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        /* Configuração Geral da Página */
+        @page {
+            size: a4 portrait;
+            margin: 1cm;
+        }
+        
+        body { font-family: Helvetica, sans-serif; color: #333; font-size: 10px; }
+        
+        /* Cabeçalho do Relatório */
+        .header { text-align: center; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; margin-bottom: 20px; }
+        h1 { font-size: 16px; color: #0d6efd; margin: 0; text-transform: uppercase; }
+        .meta { font-size: 9px; color: #666; margin-top: 5px; }
+        
+        /* Tabela Estilo "Zebra" Compacta */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        
+        th { 
+            background-color: #e9ecef; 
+            border-bottom: 2px solid #ced4da; 
+            text-align: left; 
+            padding: 6px; 
+            font-size: 9px;
+            font-weight: bold;
+            color: #495057;
+            text-transform: uppercase;
+        }
+        
+        td { 
+            border-bottom: 1px solid #dee2e6; 
+            padding: 6px; 
+            vertical-align: middle;
+        }
+        
+        /* Larguras das Colunas (Soma = 100%) */
+        .col-imovel { width: 15%; font-weight: bold; color: #0d6efd; }
+        .col-item   { width: 23%; font-weight: bold; } /* Item um pouco menor para dar espaço ao comodo */
+        .col-comodo { width: 15%; } /* Dono ou Cômodo */
+        .col-loc    { width: 15%; } /* Localização / Setor */
+        .col-qtd    { width: 10%; text-align: center; }
+        .col-un     { width: 8%;  text-align: center; font-size: 8px; }
+        .col-val    { width: 14%; text-align: right; }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Relatório de Controle de Estoque</h1>
+        <div class="meta">
+            Gerado por: {{ usuario.username|title }} | Data: {{ data_emissao|date:"d/m/Y H:i" }}
+        </div>
+    </div>
+
+    {% if 'Estoque' in modulos %}
+        <div style="background-color: #0d6efd; color: white; padding: 6px; font-weight: bold; margin-bottom: 10px; font-size: 11px;">
+            VISÃO GERAL DO ESTOQUE (Todos os Imóveis)
+        </div>
+
+        {% if 'visao_geral' in modulos.Estoque %}
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-imovel">IMÓVEL</th>
+                    <th class="col-item">ITEM</th>
+                    <th class="col-comodo">CÔMODO / DONO</th>
+                    <th class="col-loc">LOCALIZAÇÃO</th>
+                    <th class="col-qtd">QTD</th>
+                    <th class="col-un">UN</th>
+                    <th class="col-val">VALIDADE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in dados.estoque.itens %}
+                <tr>
+                    <td class="col-imovel">{{ row.imovel|upper }}</td>
+                    
+                    <td class="col-item">{{ row.item }}</td>
+                    
+                    <td class="col-comodo">{{ row.comodo }}</td>
+                    
+                    <td class="col-loc">{{ row.localizacao }}</td>
+                    
+                    <td class="col-qtd">{{ row.qtd }}</td>
+                    
+                    <td class="col-un">{{ row.unidade }}</td>
+                    
+                    <td class="col-val">
+                        {% if row.validade and row.validade != '-' %}
+                            {{ row.validade|date:"d/m/Y" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 20px; color: #999;">
+                        Nenhum item encontrado no estoque para os critérios selecionados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if 'lista_compras' in modulos.Estoque %}
+            <div style="background-color: #dc3545; color: white; padding: 6px; font-weight: bold; margin-top: 25px; margin-bottom: 10px; font-size: 11px;">
+                ITENS FALTANTES / SUGESTÃO DE COMPRA
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 70%;">ITEM FALTANTE</th>
+                        <th style="width: 30%; text-align: center;">URGÊNCIA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in dados.estoque.compras %}
+                    <tr>
+                        <td>{{ f.nome }}</td>
+                        <td style="text-align: center;">
+                            {% if f.urgencia == 'Alta' %}
+                                <strong style="color: #dc3545;">ALTA</strong>
+                            {% else %}
+                                {{ f.urgencia }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" style="text-align: center; padding: 10px; color: #999;">
+                            Nenhum item marcado como faltante.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+    {% endif %}
+
+    <div style="position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 8px; color: #aaa; border-top: 1px solid #eee; padding-top: 5px;">
+        Sistema de Gestão Integrada - Documento processado automaticamente.
+    </div>
+
+</body>
+</html>

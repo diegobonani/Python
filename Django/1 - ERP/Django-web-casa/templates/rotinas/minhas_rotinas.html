@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Minhas Tarefas{% endblock %}
+
+{% block sidebar %}
+    {% include 'partials/sidebar_usuario.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Minhas Tarefas - {{ data_hoje|date:"d/m/Y" }}</h1>
+    <p class="text-muted">Veja e gerencie suas tarefas diárias, pontos e castigos.</p>
+
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tarefas Pendentes (Hoje)</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ tarefas_de_hoje|length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Minha Pontuação Total</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pontuacao_usuario }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Castigos Ativos</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ castigos_ativos.count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Minhas Tarefas de Hoje</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="tabelaMinhasTarefas" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Tarefa</th>
+                            <th>Pontos</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in tarefas_de_hoje %}
+                        <tr id="tarefa-row-{{ item.tarefa.id }}">
+                            <td>{{ item.tarefa.hora|time:"H:i" }}</td>
+                            <td>{{ item.tarefa.tarefa }}</td>
+                            <td>{{ item.tarefa.pontos }}</td>
+                            <td class="status-cell">
+                                {% if item.status == 'Concluído' %}
+                                    <span class="badge bg-success">Concluído</span>
+                                {% elif item.status == 'Não concluído' %}
+                                    <span class="badge bg-danger">Não Concluído</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-success btn-update-status" 
+                                        data-tarefa-id="{{ item.tarefa.id }}"
+                                        data-historico-id="{{ item.historico_id }}" 
+                                        data-status="Concluído"
+                                        title="Marcar como Concluído"
+                                        {% if item.status == 'Concluído' %}disabled{% endif %}>
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger btn-update-status" 
+                                        data-tarefa-id="{{ item.tarefa.id }}"
+                                        data-historico-id="{{ item.historico_id }}" 
+                                        data-status="Não concluído"
+                                        title="Marcar como Não Concluído"
+                                        {% if item.status == 'Não concluído' %}disabled{% endif %}>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">Você não tem tarefas agendadas para hoje.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    {% if castigos_ativos %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-danger">Meus Castigos Ativos</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Motivo</th>
+                            <th>Pontos Deduzidos</th>
+                            <th>Aplicado Por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for castigo in castigos_ativos %}
+                        <tr>
+                            <td>{{ castigo.data|date:"d/m/Y H:i" }}</td>
+                            <td>{{ castigo.motivo }}</td>
+                            <td>{{ castigo.pontos_deduzidos }}</td>
+                            <td>{{ castigo.aplicado_por.username|default:"Sistema" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

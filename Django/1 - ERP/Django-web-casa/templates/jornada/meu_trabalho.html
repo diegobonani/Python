@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Meu Trabalho - Folha de Ponto{% endblock %}
+
+{% block sidebar %}
+    {% include 'partials/sidebar_usuario.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Minha Folha de Ponto</h1>
+            <p class="text-muted mb-0">Registre e acompanhe sua jornada diária.</p>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAdicionarPonto">
+            <i class="fas fa-plus me-1"></i> Registro Manual
+        </button>
+    </div>
+
+    <div class="card mb-4 border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+            <h5 class="card-title text-primary mb-3">
+                <i class="fas fa-fingerprint me-2"></i>
+                Registrar Ponto Hoje ({% now "d/m/Y" %})
+            </h5>
+            <div class="row text-center g-2">
+                <div class="col-6 col-md-3">
+                    <button class="btn btn-outline-success w-100 py-3 btn-bater-ponto" data-acao="entrada" {% if ponto_hoje.entrada %}disabled{% endif %}>
+                        <i class="fas fa-sign-in-alt fa-2x d-block mb-2"></i>
+                        Entrada
+                        {% if ponto_hoje.entrada %}
+                            <div class="mt-1 small fw-bold text-success">
+                                <i class="fas fa-check-circle me-1"></i>{{ ponto_hoje.entrada|time:"H:i" }}
+                            </div>
+                        {% endif %}
+                    </button>
+                </div>
+                <div class="col-6 col-md-3">
+                    <button class="btn btn-outline-warning w-100 py-3 btn-bater-ponto" data-acao="saida_almoco" {% if ponto_hoje.saida_almoco %}disabled{% endif %}>
+                        <i class="fas fa-utensils fa-2x d-block mb-2"></i>
+                        Saída Almoço
+                        {% if ponto_hoje.saida_almoco %}
+                            <div class="mt-1 small fw-bold text-warning">
+                                <i class="fas fa-check-circle me-1"></i>{{ ponto_hoje.saida_almoco|time:"H:i" }}
+                            </div>
+                        {% endif %}
+                    </button>
+                </div>
+                <div class="col-6 col-md-3">
+                    <button class="btn btn-outline-info w-100 py-3 btn-bater-ponto" data-acao="retorno_almoco" {% if ponto_hoje.retorno_almoco %}disabled{% endif %}>
+                        <i class="fas fa-undo fa-2x d-block mb-2"></i>
+                        Retorno Almoço
+                        {% if ponto_hoje.retorno_almoco %}
+                            <div class="mt-1 small fw-bold text-info">
+                                <i class="fas fa-check-circle me-1"></i>{{ ponto_hoje.retorno_almoco|time:"H:i" }}
+                            </div>
+                        {% endif %}
+                    </button>
+                </div>
+                <div class="col-6 col-md-3">
+                    <button class="btn btn-outline-danger w-100 py-3 btn-bater-ponto" data-acao="saida" {% if ponto_hoje.saida %}disabled{% endif %}>
+                        <i class="fas fa-sign-out-alt fa-2x d-block mb-2"></i>
+                        Saída
+                        {% if ponto_hoje.saida %}
+                            <div class="mt-1 small fw-bold text-danger">
+                                <i class="fas fa-check-circle me-1"></i>{{ ponto_hoje.saida|time:"H:i" }}
+                            </div>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Horas Trabalhadas (Mês)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_horas_mes|floatformat:2 }}h</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Horas Extras (Mês)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_extras_mes|floatformat:2 }}h</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-stopwatch fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">A Receber (Estimativa)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ total_receber_mes|floatformat:"2g" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Histórico de Registros</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+<div class="table-responsive">
+    <table class="table table-bordered table-hover" id="tabelaMeusPontos" width="100%" cellspacing="0">
+        <thead class="table-light">
+            <tr>
+                <th style="min-width: 120px;">Data</th>
+                <th class="text-center" style="min-width: 100px;">Entrada</th>
+                <th class="text-center" style="min-width: 100px;">S. Almoço</th>
+                <th class="text-center" style="min-width: 100px;">R. Almoço</th>
+                <th class="text-center" style="min-width: 100px;">Saída</th>
+                <th class="text-center bg-light">Almoço</th>
+                <th class="text-center bg-light">Total</th>
+                <th class="text-center bg-light">Extras</th>
+                <th class="text-end bg-light">Valor</th>
+                <th class="text-center" style="min-width: 100px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="table-info" id="linha-insercao-rapida">
+                <td class="p-1 align-middle">
+                    <input type="date" name="data" id="quick-data" class="form-control form-control-sm fw-bold" value="{% now 'Y-m-d' %}">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="entrada" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida_almoco" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="retorno_almoco" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td colspan="4" class="align-middle text-center text-muted small">
+                    <i class="fas fa-arrow-left me-1"></i> Preencha para adicionar
+                </td>
+                <td class="p-1 align-middle text-center">
+                    <button class="btn btn-success btn-sm w-100" id="btn-salvar-rapido" title="Salvar Novo Registro">
+                        <i class="fas fa-plus me-1"></i> Salvar
+                    </button>
+                </td>
+            </tr>
+            {% for registro in registros %}
+            <tr id="row-{{ registro.pk }}" data-registro-id="{{ registro.pk }}">
+                <td class="align-middle text-nowrap" data-order="{{ registro.data|date:'Y-m-d' }}">
+                    {{ registro.data|date:"d/m/Y" }} <small class="text-muted">({{ registro.data|date:"D" }})</small>
+                </td>
+                
+                <td class="p-1 align-middle">
+                    <input type="time" name="entrada" value="{{ registro.entrada|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida_almoco" value="{{ registro.saida_almoco|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="retorno_almoco" value="{{ registro.retorno_almoco|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida" value="{{ registro.saida|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                
+                <td class="align-middle text-center text-muted bg-light">{{ registro.horas_almoco|floatformat:2 }}h</td>
+                <td class="align-middle text-center fw-bold bg-light">{{ registro.horas_trabalhadas|floatformat:2 }}h</td>
+                <td class="align-middle text-center bg-light">
+                    {% if registro.horas_extras > 0 %}
+                        <span class="badge bg-warning text-dark">+{{ registro.horas_extras|floatformat:2 }}h</span>
+                    {% else %}<span class="text-muted">-</span>{% endif %}
+                </td>
+                <td class="align-middle text-end text-success fw-bold bg-light">R$ {{ registro.valor_receber|floatformat:"2g" }}</td>
+                
+                <td class="align-middle text-center">
+                    <div class="btn-group btn-group-sm actions-view">
+                        <button class="btn btn-outline-primary btn-enable-edit" title="Editar na linha"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-outline-danger btn-deletar-ponto" data-id="{{ registro.pk }}" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="btn-group btn-group-sm actions-edit" style="display: none;">
+                        <button class="btn btn-success btn-save-row" title="Salvar"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-secondary btn-cancel-edit" title="Cancelar"><i class="fas fa-times"></i></button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div><div class="table-responsive">
+    <table class="table table-bordered table-hover" id="tabelaMeusPontos" width="100%" cellspacing="0">
+        <thead class="table-light">
+            <tr>
+                <th style="min-width: 120px;">Data</th>
+                <th class="text-center" style="min-width: 100px;">Entrada</th>
+                <th class="text-center" style="min-width: 100px;">S. Almoço</th>
+                <th class="text-center" style="min-width: 100px;">R. Almoço</th>
+                <th class="text-center" style="min-width: 100px;">Saída</th>
+                <th class="text-center bg-light">Almoço</th>
+                <th class="text-center bg-light">Total</th>
+                <th class="text-center bg-light">Extras</th>
+                <th class="text-end bg-light">Valor</th>
+                <th class="text-center" style="min-width: 100px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="table-info" id="linha-insercao-rapida">
+                <td class="p-1 align-middle">
+                    <input type="date" name="data" id="quick-data" class="form-control form-control-sm fw-bold" value="{% now 'Y-m-d' %}">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="entrada" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida_almoco" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="retorno_almoco" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida" class="form-control form-control-sm text-center quick-input">
+                </td>
+                <td colspan="4" class="align-middle text-center text-muted small">
+                    <i class="fas fa-arrow-left me-1"></i> Preencha para adicionar
+                </td>
+                <td class="p-1 align-middle text-center">
+                    <button class="btn btn-success btn-sm w-100" id="btn-salvar-rapido" title="Salvar Novo Registro">
+                        <i class="fas fa-plus me-1"></i> Salvar
+                    </button>
+                </td>
+            </tr>
+            {% for registro in registros %}
+            <tr id="row-{{ registro.pk }}" data-registro-id="{{ registro.pk }}">
+                <td class="align-middle text-nowrap" data-order="{{ registro.data|date:'Y-m-d' }}">
+                    {{ registro.data|date:"d/m/Y" }} <small class="text-muted">({{ registro.data|date:"D" }})</small>
+                </td>
+                
+                <td class="p-1 align-middle">
+                    <input type="time" name="entrada" value="{{ registro.entrada|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida_almoco" value="{{ registro.saida_almoco|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="retorno_almoco" value="{{ registro.retorno_almoco|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                <td class="p-1 align-middle">
+                    <input type="time" name="saida" value="{{ registro.saida|time:'H:i' }}" class="form-control-plaintext text-center time-input" readonly>
+                </td>
+                
+                <td class="align-middle text-center text-muted bg-light">{{ registro.horas_almoco|floatformat:2 }}h</td>
+                <td class="align-middle text-center fw-bold bg-light">{{ registro.horas_trabalhadas|floatformat:2 }}h</td>
+                <td class="align-middle text-center bg-light">
+                    {% if registro.horas_extras > 0 %}
+                        <span class="badge bg-warning text-dark">+{{ registro.horas_extras|floatformat:2 }}h</span>
+                    {% else %}<span class="text-muted">-</span>{% endif %}
+                </td>
+                <td class="align-middle text-end text-success fw-bold bg-light">R$ {{ registro.valor_receber|floatformat:"2g" }}</td>
+                
+                <td class="align-middle text-center">
+                    <div class="btn-group btn-group-sm actions-view">
+                        <button class="btn btn-outline-primary btn-enable-edit" title="Editar na linha"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-outline-danger btn-deletar-ponto" data-id="{{ registro.pk }}" title="Excluir"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="btn-group btn-group-sm actions-edit" style="display: none;">
+                        <button class="btn btn-success btn-save-row" title="Salvar"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-secondary btn-cancel-edit" title="Cancelar"><i class="fas fa-times"></i></button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarPonto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formAdicionarPonto" method="POST">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-clock me-2"></i>Registrar Ponto Manual</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle me-1"></i> Use este formulário para registrar dias passados ou corrigir horários.
+                    </div>
+                    {{ form_ponto.as_p }}
+                    <div id="form-errors-add" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarPonto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formEditarPonto" method="POST">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Registro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_ponto.as_p }}
+                    <div id="form-errors-edit" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalExcluirPonto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este registro de ponto? Esta ação <strong>não pode</strong> ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formExcluirPonto" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Passa as URLs com namespace 'jornada:' para o arquivo JavaScript externo
+    window.URL_BATER_PONTO = "{% url 'jornada:bater_ponto_ajax' %}";
+    window.URL_REGISTRAR_PONTO = "{% url 'jornada:registrar_ponto_ajax' %}";
+    // Usa '0' como placeholder para o ID, que será substituído pelo JS
+    window.URL_GET_PONTO_JSON = "{% url 'jornada:get_ponto_json' pk=0 %}";
+    window.URL_EDITAR_PONTO = "{% url 'jornada:editar_ponto_ajax' pk=0 %}";
+    window.URL_DELETAR_PONTO = "{% url 'jornada:deletar_ponto_ajax' pk=0 %}";
+</script>
+<script src="{% static 'js/meu_trabalho.js' %}"></script>
+{% endblock %}

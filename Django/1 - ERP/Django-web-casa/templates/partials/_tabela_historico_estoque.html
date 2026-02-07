@@ -1,0 +1,101 @@
+<div class="table-responsive">
+    <table id="tb-historico-ajax" class="table table-hover align-middle w-100">
+        <thead class="table-light">
+            <tr>
+                <th>Data/Hora</th>
+                <th>Usuário</th>
+                <th>Ação</th>
+                <th>Item</th>
+                <th>Local / Dono</th>
+                <th>Qtd.</th>
+                <th>Obs.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in historico %}
+            <tr class="{% if h.tipo_movimento == 'EXCLUSAO' %}table-danger bg-opacity-10{% endif %}">
+                
+                <td data-sort="{{ h.data_movimento|date:'YmdHis' }}">
+                    {{ h.data_movimento|date:"d/m/Y H:i" }}
+                </td>
+
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width:25px; height:25px; font-size:10px;">
+                            {{ h.usuario.username|slice:":2"|upper }}
+                        </div>
+                        <small>{{ h.usuario.username }}</small>
+                    </div>
+                </td>
+
+                <td>
+                    {% if h.tipo_movimento == 'CRIACAO' %}
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success">Criação</span>
+                    {% elif h.tipo_movimento == 'BAIXA' %}
+                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Baixa</span>
+                    {% elif h.tipo_movimento == 'EDICAO' %}
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Edição</span>
+                    {% elif h.tipo_movimento == 'EXCLUSAO' %}
+                        <span class="badge bg-dark text-white"><i class="fas fa-trash-alt me-1"></i> Exclusão</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ h.tipo_movimento }}</span>
+                    {% endif %}
+                </td>
+
+                <td class="fw-bold">
+                    {% if h.estoque %}
+                        <span class="text-primary">
+                            {% if h.estoque.setor == 'CASA' %} <i class="fas fa-home me-1 text-muted"></i> {{ h.estoque.item_casa.nome }}
+                            {% elif h.estoque.setor == 'PET' %} <i class="fas fa-paw me-1 text-muted"></i> {{ h.estoque.item_pet.nome }}
+                            {% elif h.estoque.setor == 'USUARIO' %} <i class="fas fa-user me-1 text-muted"></i> {{ h.estoque.item_usuario.nome }}
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        <span class="text-decoration-line-through text-muted">
+                            {{ h.item_nome_snapshot|default:"Item Desconhecido" }}
+                        </span>
+                        <small class="text-danger ms-1">(Removido)</small>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if h.estoque %}
+                        {% if h.estoque.setor == 'CASA' and h.estoque.item_casa.comodo %}
+                            <small class="d-block text-muted" style="line-height:1; font-size:0.75rem;">
+                                {{ h.estoque.item_casa.comodo.imovel.nome|default:"-" }}
+                            </small>
+                            <strong>{{ h.estoque.item_casa.comodo.nome }}</strong>
+                        {% elif h.estoque.setor == 'PET' %}
+                            Pet: <strong>{{ h.estoque.item_pet.pet.nome_pet }}</strong>
+                        {% elif h.estoque.setor == 'USUARIO' %}
+                            User: <strong>{{ h.estoque.item_usuario.usuario.username }}</strong>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted small">{{ h.item_local_snapshot|default:"-" }}</span>
+                    {% endif %}
+                </td>
+
+                <td class="fw-bold">
+                    {% if h.tipo_movimento == 'BAIXA' %}
+                        <span class="text-danger">-{{ h.quantidade_movimentada|floatformat:0 }}</span>
+                    {% elif h.tipo_movimento == 'CRIACAO' %}
+                        <span class="text-success">+{{ h.quantidade_movimentada|floatformat:0 }}</span>
+                    {% elif h.tipo_movimento == 'EXCLUSAO' %}
+                        <span class="text-muted">{{ h.saldo_anterior|floatformat:0 }}</span>
+                    {% else %}
+                        {{ h.quantidade_movimentada|floatformat:0 }}
+                    {% endif %}
+                </td>
+
+                <td>
+                    <small class="text-muted">{{ h.observacao|default:"-"|truncatechars:40 }}</small>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-4 text-muted">Nenhum histórico encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

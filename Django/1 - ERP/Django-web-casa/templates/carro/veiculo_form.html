@@ -1,0 +1,207 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block content %}
+<div class="d-flex" style="min-height: 100vh;">
+    
+    <div class="bg-dark text-white flex-shrink-0 d-none d-md-block" style="width: 280px;">
+        {% include 'partials/sidebar_admin.html' %}
+    </div>
+
+    <div class="flex-grow-1 bg-light">
+        
+        <div class="d-md-none bg-dark p-2 text-white">
+            <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+                <i class="fas fa-bars"></i> Menu
+            </button>
+        </div>
+
+        <div class="container-fluid p-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 text-gray-800 border-start border-primary border-5 ps-3 py-1">
+                    {{ titulo }}
+                </h2>
+                <a href="{% url 'carro:gerenciar_veiculo' %}" class="btn btn-secondary shadow-sm">
+                    <i class="fas fa-arrow-left me-2"></i> Voltar
+                </a>
+            </div>
+
+            <div class="card shadow-lg border-0 rounded-lg">
+                
+                <div class="card-header bg-white p-0 pt-3 border-bottom-0">
+                    <ul class="nav nav-tabs card-header-tabs px-4" id="veiculoTab" role="tablist">
+                        
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold py-3 text-primary" id="geral-tab" data-bs-toggle="tab" data-bs-target="#geral" type="button" role="tab" aria-controls="geral" aria-selected="true">
+                                <i class="fas fa-car me-2"></i> Dados do Veículo
+                            </button>
+                        </li>
+                        
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold py-3 text-secondary" id="consumo-tab" data-bs-toggle="tab" data-bs-target="#consumo" type="button" role="tab" aria-controls="consumo" aria-selected="false">
+                                <i class="fas fa-gas-pump me-2"></i> Consumo & Configurações
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4 bg-white rounded-bottom">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger d-flex align-items-center mb-4">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <div>{{ form.non_field_errors }}</div>
+                            </div>
+                        {% endif %}
+
+                        <div class="tab-content" id="veiculoTabContent">
+                            
+                            <div class="tab-pane fade show active" id="geral" role="tabpanel" aria-labelledby="geral-tab">
+                                <h5 class="text-secondary mb-4 small text-uppercase fw-bold ls-1">Informações Básicas</h5>
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark">Nome / Apelido</label>
+                                        {{ form.nome }}
+                                        <div class="text-danger small">{{ form.nome.errors }}</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark">Placa</label>
+                                        {{ form.placa }}
+                                        <div class="text-danger small">{{ form.placa.errors }}</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold text-dark">Marca</label>
+                                        {{ form.marca }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold text-dark">Modelo</label>
+                                        {{ form.modelo }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold text-dark">Ano</label>
+                                        {{ form.ano }}
+                                    </div>
+
+                                    {% if not is_edit %}
+                                    <div class="col-12">
+                                        <div class="bg-light p-3 rounded border border-info">
+                                            <label class="form-label fw-bold text-primary mb-1">
+                                                <i class="fas fa-tachometer-alt me-1"></i> Quilometragem Inicial (KM Atual)
+                                            </label>
+                                            <input type="number" name="km_atual" class="form-control" placeholder="Ex: 50000" step="0.1">
+                                            <small class="text-muted">Preencha apenas se for o primeiro cadastro deste carro.</small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="consumo" role="tabpanel" aria-labelledby="consumo-tab">
+                                <h5 class="text-secondary mb-4 small text-uppercase fw-bold ls-1">Métricas de Consumo (Km/L)</h5>
+                                
+                                <div class="row g-4 mb-4">
+                                    <div class="col-md-6">
+                                        <div class="p-3 border rounded bg-light h-100">
+                                            <label class="form-label fw-bold text-success"><i class="fas fa-leaf me-1"></i> Gasolina</label>
+                                            <div class="mb-3">
+                                                <label class="small text-muted">Na Cidade</label>
+                                                {{ form.consumo_cidade_gasolina }}
+                                            </div>
+                                            <div>
+                                                <label class="small text-muted">Na Estrada</label>
+                                                {{ form.consumo_estrada_gasolina }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 border rounded bg-light h-100">
+                                            <label class="form-label fw-bold text-primary"><i class="fas fa-burn me-1"></i> Etanol</label>
+                                            <div class="mb-3">
+                                                <label class="small text-muted">Na Cidade</label>
+                                                {{ form.consumo_cidade_etanol }}
+                                            </div>
+                                            <div>
+                                                <label class="small text-muted">Na Estrada</label>
+                                                {{ form.consumo_estrada_etanol }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="text-muted opacity-25">
+
+                                <h5 class="text-secondary mb-3 small text-uppercase fw-bold ls-1">Controle de Acesso</h5>
+                                <div class="bg-light p-4 rounded border">
+                                    <label class="d-block fw-bold mb-3 text-dark">Quem tem permissão para usar este veículo?</label>
+                                    <div class="d-flex flex-wrap gap-3">
+                                        {{ form.autorizado_a_usar }}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div> <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm">
+                                <i class="fas fa-save me-2"></i> Salvar Veículo
+                            </button>
+                            
+                            {% if is_edit %}
+                                <button type="button" class="btn btn-outline-danger px-4" onclick="confirmarExclusao()">
+                                    <i class="fas fa-trash-alt me-2"></i> Excluir Registro
+                                </button>
+                            {% endif %}
+                        </div>
+
+                    </form>
+                </div> </div> </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="mobileSidebar">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Menu</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        {% include 'partials/sidebar_admin.html' %}
+    </div>
+</div>
+
+{% if is_edit %}
+<form id="form-excluir" action="{% url 'carro:excluir_veiculo' veiculo.id %}" method="POST" style="display: none;">
+    {% csrf_token %}
+</form>
+{% endif %}
+
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    function confirmarExclusao() {
+        if (confirm('ATENÇÃO: Deseja realmente excluir este veículo? Todo o histórico de abastecimentos e manutenções será perdido.')) {
+            document.getElementById('form-excluir').submit();
+        }
+    }
+</script>
+<style>
+    /* CSS Extra para garantir o visual moderno das abas */
+    .card-header-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    .card-header-tabs .nav-link:hover {
+        border-color: #e9ecef;
+        color: #495057;
+    }
+    .card-header-tabs .nav-link.active {
+        background-color: transparent;
+        border-bottom: 3px solid #0d6efd; /* Azul Bootstrap */
+        color: #0d6efd;
+    }
+    .ls-1 { letter-spacing: 1px; }
+</style>
+{% endblock %}

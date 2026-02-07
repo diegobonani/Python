@@ -1,0 +1,52 @@
+{% if itens_estoque %}
+<div class="table-responsive">
+    <table id="tabela-principal" class="table table-hover w-100">
+        <thead class="bg-warning text-dark">
+            <tr>
+                <th>Data</th>
+                <th>Item</th>
+                <th>Pet (Dono)</th>
+                <th>Categoria</th>
+                <th>Qtd</th>
+                <th>Validade</th>
+                <th class="no-sort">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens_estoque %}
+            {% with filho=item.item_pet %}
+            <tr>
+                <td>{{ item.data_cadastro|date:"d/m/Y" }}</td>
+                <td class="fw-bold">{{ filho.nome }}</td>
+                <td><i class="fas fa-paw me-1"></i> {{ filho.pet.nome_pet }}</td>
+                <td>{{ filho.categoria.nome_categoria|default:"-" }}</td>
+                <td>{{ filho.quantidade }} {{ filho.unidade.sigla|default:"" }}</td>
+                <td>{{ filho.validade|date:"d/m/y"|default:"-" }}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-dark btn-editar-item-pet" data-id="{{ item.id }}" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button class="btn btn-outline-warning btn-dar-baixa" 
+                                data-id="{{ item.id }}" 
+                                title="Consumir / Dar Baixa">
+                            <i class="fas fa-box-open"></i>
+                        </button>
+
+                        <button class="btn btn-outline-danger btn-excluir-item" 
+                                data-id="{{ item.id }}" 
+                                title="Excluir Definitivamente">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-light text-center m-3">Nenhum item de pet encontrado.</div>
+{% endif %}

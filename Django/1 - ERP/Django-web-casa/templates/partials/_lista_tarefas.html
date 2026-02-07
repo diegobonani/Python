@@ -1,0 +1,30 @@
+{% for tarefa in tarefas_com_status %}
+<div class="card mb-3" data-task-container="{{ tarefa.id }}">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong><i class="far fa-clock me-2"></i>{{ tarefa.hora|time:"H:i" }} - {{ tarefa.tarefa }}</strong>
+    <div class="d-flex align-items-center">
+      <span class="me-3">
+        <button class="btn btn-sm btn-outline-secondary btn-pontos" data-action="decrement" data-task-id="{{ tarefa.id }}"><i class="fas fa-minus"></i></button>
+        <span class="badge bg-secondary mx-1" id="pontos-{{ tarefa.id }}" style="font-size: 1em; width: 30px;">{{ tarefa.pontos }}</span>
+        <button class="btn btn-sm btn-outline-secondary btn-pontos" data-action="increment" data-task-id="{{ tarefa.id }}"><i class="fas fa-plus"></i></button>
+      </span>
+      <button class="btn btn-sm btn-outline-danger btn-deletar-tarefa" data-task-id="{{ tarefa.id }}" data-task-name="{{ tarefa.tarefa }}" title="Excluir Tarefa"><i class="fas fa-trash"></i></button>
+    </div>
+  </div>
+  <ul class="list-group list-group-flush">
+    {% for status_info in tarefa.status_usuarios %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span><i class="fas fa-user me-2"></i>{{ status_info.usuario.username }}</span>
+      <select class="form-select form-select-sm w-auto status-select" data-task-id="{{ tarefa.id }}" data-user-id="{{ status_info.usuario.id }}">
+        <option value="Pendente" {% if status_info.status == 'Pendente' %}selected{% endif %}>Pendente</option>
+        <option value="Concluído" {% if status_info.status == 'Concluído' %}selected{% endif %}>Concluído</option>
+        <option value="Não Feito" {% if status_info.status == 'Não Feito' %}selected{% endif %}>Não Feito</option>
+        <option value="Atrasado" {% if status_info.status == 'Atrasado' %}selected{% endif %}>Atrasado</option>
+      </select>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% empty %}
+<div class="alert alert-info text-center">Nenhuma tarefa encontrada para hoje com os filtros selecionados.</div>
+{% endfor %}

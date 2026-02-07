@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block style %}
+<style>
+  /* Wrapper Principal que coloca Sidebar e Conteúdo lado a lado */
+  .dashboard-wrapper {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden; /* Impede scroll na página inteira (scroll é interno) */
+    background-color: #f4f6f9;
+  }
+
+  /* SIDEBAR: Configuração Crítica para Dropdowns funcionarem */
+  .sidebar-container {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    flex-shrink: 0;
+    height: 100%;
+    
+    /* overflow: visible é OBRIGATÓRIO para o menu da engrenagem "sair" da caixa */
+    overflow: visible; 
+    z-index: 1000;    
+    background-color: #212529;
+    border-right: 1px solid rgba(0,0,0,0.1);
+  }
+
+  /* Área Principal de Conteúdo */
+  .content {
+    flex-grow: 1;
+    height: 100%;
+    overflow-y: auto; /* Scroll vertical apenas aqui */
+    overflow-x: hidden;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  
+  /* Estilos Globais de Cards */
+  :root { --app-radius: 12px; --app-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08); }
+  
+  .card-moderno { 
+      border: 1px solid rgba(0,0,0,0.03); 
+      border-radius: var(--app-radius); 
+      box-shadow: var(--app-shadow); 
+      background: #fff; 
+      margin-bottom: 1.5rem; 
+      width: 100%; 
+  }
+  
+  .card-moderno-header { 
+      background: #fff; 
+      border-bottom: 1px solid rgba(0,0,0,0.05); 
+      padding: 1rem 1.5rem; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+  }
+  
+  .card-moderno-body { padding: 1.5rem; }
+  
+  .card-header-primary { background: linear-gradient(45deg, #0d6efd, #0a58ca); color: white; }
+  .card-header-success { background: linear-gradient(45deg, #198754, #157347); color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="dashboard-wrapper">
+
+      <aside class="sidebar-container">
+          {% block sidebar %}
+              {% if user.is_superuser %}
+                  {% include 'partials/sidebar_admin.html' %}
+              {% else %}
+                  <div class="p-3 text-white">Menu de Usuário</div>
+              {% endif %}
+          {% endblock %}
+      </aside>
+    
+      <main class="content">
+        {% if messages %}
+            <div class="container-fluid px-0 mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    
+        <div class="container-fluid px-0">
+            {% block main_content %}
+            {% endblock %}
+        </div>
+      </main>
+
+  </div> 
+
+  <div class="modal fade text-dark" id="modalGlobalExportacao" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-cloud-download-alt me-2"></i> Central de Exportação
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body bg-light p-4">
+                {% include 'partials/_aba_exportacoes.html' %}
+            </div>
+
+        </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

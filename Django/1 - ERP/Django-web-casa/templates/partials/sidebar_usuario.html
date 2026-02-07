@@ -1,0 +1,46 @@
+{% load static %}
+
+<div class="d-flex flex-column flex-shrink-0 p-3 bg-white text-dark shadow" style="width: 260px; min-height: 100vh;">
+    
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+        <i class="fas fa-home fa-lg me-2 text-primary"></i>
+        <span class="fs-5 fw-bold text-primary">Minha Casa</span>
+    </a>
+    
+    <hr>
+
+    <ul class="nav nav-pills flex-column mb-auto">
+        <div class="text-muted small fw-bold text-uppercase px-3 mb-2 mt-2">Meu Dia</div>
+
+        <li>
+            <a href="{% url 'alimentacao:gerenciar_alimentacao' %}" class="nav-link link-dark {% if 'alimentacao' in request.path %}active text-white{% endif %}">
+                <i class="fas fa-utensils me-2" style="width: 20px;"></i> O que comer?
+            </a>
+        </li>
+        
+        <li>
+            <a href="#" class="nav-link link-dark">
+                <i class="fas fa-tasks me-2" style="width: 20px;"></i> Minhas Tarefas
+            </a>
+        </li>
+    </ul>
+    
+    <hr>
+    
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="bg-secondary text-white rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 32px; height: 32px;">
+                <strong>{{ user.username|slice:":1"|upper }}</strong>
+            </div>
+            <strong>{{ user.username|title }}</strong>
+        </a>
+        <ul class="dropdown-menu text-small shadow">
+            <li>
+                <form action="{% url 'logout' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item">Sair</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</div>

@@ -1,0 +1,161 @@
+{% load humanize %}
+
+<style>
+    .horizontal-planner {
+        display: flex;
+        flex-wrap: nowrap; /* Impede a quebra de linha */
+        overflow-x: auto;  /* Habilita rolagem lateral */
+        gap: 1.5rem;       /* Espaço entre os cards */
+        padding-bottom: 1rem; /* Espaço para a barra de rolagem não colar */
+    }
+
+    .day-card {
+        flex: 0 0 300px; /* Largura fixa para cada dia (ajuste se quiser mais largo) */
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Garante altura igual */
+    }
+
+    /* Estilização da barra de rolagem (opcional, fica mais bonito) */
+    .horizontal-planner::-webkit-scrollbar {
+        height: 8px;
+    }
+    .horizontal-planner::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    .horizontal-planner::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+    }
+    .horizontal-planner::-webkit-scrollbar-thumb:hover {
+        background: #bbb;
+    }
+</style>
+
+<div class="horizontal-planner">
+    {% for dia in dias_semana %}
+    <div class="day-card">
+        <div class="card h-100 shadow-sm border-0 {% if dia.is_hoje %}border-top border-4 border-success{% endif %}">
+            
+            <div class="card-header bg-white border-bottom py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="d-block fw-bold text-dark text-uppercase" style="font-size: 0.9rem;">
+                            {{ dia.nome }}
+                        </span>
+                        <small class="text-muted">{{ dia.data|date:"d/m/Y" }}</small>
+                    </div>
+                    {% if dia.is_hoje %}
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill">Hoje</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-body p-0 bg-light overflow-auto" style="min-height: 250px; max-height: 400px;">
+                {% if not dia.refeicoes %}
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted small opacity-50">
+                        <i class="fas fa-utensils fa-2x mb-2"></i>
+                        <span>Sem registros</span>
+                    </div>
+                {% else %}
+                    <div class="list-group list-group-flush">
+                        {% for ref in dia.refeicoes %}
+                        <div class="list-group-item list-group-item-action border-bottom p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    {% if ref.tipo == 'CAFE' %}
+                                        <span class="badge bg-warning text-dark border border-warning rounded-pill" style="font-size: 0.65rem;">
+                                            <i class="fas fa-coffee me-1"></i>Café
+                                        </span>
+                                    {% elif ref.tipo == 'ALMOCO' %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill" style="font-size: 0.65rem;">
+                                            <i class="fas fa-drumstick-bite me-1"></i>Almoço
+                                        </span>
+                                    {% elif ref.tipo == 'JANTA' %}
+                                        <span class="badge bg-dark bg-opacity-10 text-dark border border-dark rounded-pill" style="font-size: 0.65rem;">
+                                            <i class="fas fa-moon me-1"></i>Janta
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill" style="font-size: 0.65rem;">
+                                            <i class="fas fa-apple-alt me-1"></i>Lanche
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="d-flex gap-2 bg-white rounded px-2 py-1 shadow-sm border">
+                                    <button type="button" 
+                                            class="btn btn-link p-0 text-primary js-btn-editar-refeicao" 
+                                            data-id="{{ ref.id }}"
+                                            title="Editar">
+                                        <i class="fas fa-pencil-alt fa-xs"></i>
+                                    </button>
+                                    <div class="vr"></div>
+                                    <button type="button" 
+                                            class="btn btn-link p-0 text-danger js-btn-excluir-refeicao" 
+                                            data-id="{{ ref.id }}"
+                                            title="Excluir">
+                                        <i class="fas fa-times fa-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p class="mb-1 small fw-bold text-dark text-break" style="line-height: 1.4;">
+                                {{ ref.resumo_alimentos }}
+                            </p>
+
+                            <div class="d-flex justify-content-between align-items-end mt-2">
+                                <small class="text-muted fst-italic text-truncate" style="max-width: 60%;">
+                                    {{ ref.descricao_adicional|default:"" }}
+                                </small>
+                                <span class="fw-bold text-success small bg-success bg-opacity-10 px-2 py-1 rounded">
+                                    {{ ref.total_calorias }} kcal
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-footer bg-white border-top py-2">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold me-2" 
+                         style="width: 28px; height: 28px; font-size: 0.75rem;">
+                        {{ user.username|slice:":2"|upper }}
+                    </div>
+                    
+                    <div class="d-flex flex-column" style="line-height: 1;">
+                        <small class="text-muted" style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px;">Atribuído a</small>
+                        <span class="fw-bold text-dark" style="font-size: 0.8rem;">
+                            {{ user.first_name|default:user.username }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-4 bg-white p-3 rounded shadow-sm border">
+    <button type="button" 
+            class="btn btn-outline-secondary btn-sm fw-bold px-3 js-nav-semana" 
+            data-date="{{ semana_anterior }}">
+        <i class="fas fa-chevron-left me-2"></i> Semana Anterior
+    </button>
+    
+    <div class="text-center">
+        <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Visualizando Período</small>
+        <span class="fw-bold text-dark h6 mb-0">
+            {{ inicio_semana|date:"d/m" }} a {{ fim_semana|date:"d/m/Y" }}
+        </span>
+    </div>
+
+    <button type="button" 
+            class="btn btn-outline-secondary btn-sm fw-bold px-3 js-nav-semana" 
+            data-date="{{ proxima_semana }}">
+        Próxima Semana <i class="fas fa-chevron-right ms-2"></i>
+    </button>
+</div>

@@ -1,0 +1,169 @@
+{% extends 'base_dashboard.html' %}
+{% load i18n %}
+
+{% block title %}Simulação: {{ cenario.nome }}{% endblock %}
+
+{% block sidebar %}
+  {% if user.is_superuser or user.perfil.tipo == 'Administrador' %}
+    {% include 'partials/sidebar_admin.html' %}
+  {% else %}
+    {% include 'partials/sidebar_usuario.html' %}
+  {% endif %}
+{% endblock %}
+
+{% block main_content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Simulação: {{ cenario.nome }}</h1>
+    <a href="{% url 'gerenciar_financas' %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Voltar para Finanças</a>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <p class="mb-2"><strong>Descrição:</strong> {{ cenario.descricao|default:"Sem descrição." }}</p>
+      <h4 class="text-{% if cenario.impacto_total >= 0 %}success{% else %}danger{% endif %}">
+        <strong>Impacto Total Estimado no Saldo: R$ {{ cenario.impacto_total|floatformat:"2g" }}</strong>
+      </h4>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card">
+        <div class="card-header"><h5><i class="fas fa-plus-circle me-2"></i>Adicionar Lançamento</h5></div>
+        <div class="card-body">
+          <form method="post" action="{% url 'simulacao_financeira_detalhe' pk=cenario.pk %}">
+            {% csrf_token %}
+            {{ form_item.as_p }}
+            <button type="submit" class="btn btn-primary w-100 mt-3">Adicionar ao Cenário</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-8 mb-4">
+      <div class="card">
+        <div class="card-header"><h5><i class="fas fa-list-ul me-2"></i>Lançamentos no Cenário</h5></div>
+        <div class="card-body">
+          <table id="tabela-lancamentos-simulacao" class="table table-striped table-bordered" style="width:100%">
+            <thead><tr><th>Descrição</th><th>Tipo</th><th>Valor</th><th class="text-end">Ações</th></tr></thead>
+            <tbody>
+              {% for lancamento in lancamentos %}
+              <tr data-id="{{ lancamento.pk }}">
+                <td>{{ lancamento.descricao }}</td>
+                <td>
+                    <span class="badge bg-{% if lancamento.tipo == 'Receitas' %}success{% else %}danger{% endif %}">{{ lancamento.tipo }}</span>
+                </td>
+                <td>R$ {{ lancamento.valor|floatformat:"2g" }}</td>
+                <td class="text-end">
+                    <button class="btn btn-primary btn-sm btn-editar-lancamento" data-id="{{ lancamento.pk }}" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-danger btn-sm btn-excluir-lancamento" data-id="{{ lancamento.pk }}" title="Excluir"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted py-4">Nenhum lançamento adicionado a este cenário.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalEditarLancamento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="formEditarLancamento">
+          {% csrf_token %}
+          <div class="modal-header"><h5 class="modal-title">Editar Lançamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div class="modal-body">
+            {# Usamos o form_item como esqueleto, mas será preenchido com JS #}
+            {{ form_item.as_p }}
+          </div>
+          <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Alterações</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalConfirmarExclusaoLancamento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Confirmar Exclusão</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><p>Deseja mesmo excluir este lançamento?</p></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><form id="formExcluirLancamento" method="post">{% csrf_token %}<button type="submit" class="btn btn-danger">Confirmar</button></form></div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Inicializa o DataTable
+    var tabelaLancamentos = $('#tabela-lancamentos-simulacao').DataTable({
+        language: { url: 'https://cdn.datatables.net/plug-ins/2.0.8/i18n/pt-BR.json' },
+        "order": []
+    });
+
+    // Instâncias dos modais
+    var modalEditar = new bootstrap.Modal(document.getElementById('modalEditarLancamento'));
+    var modalExcluir = new bootstrap.Modal(document.getElementById('modalConfirmarExclusaoLancamento'));
+
+    // --- LÓGICA DE EDIÇÃO ---
+    $('#tabela-lancamentos-simulacao tbody').on('click', '.btn-editar-lancamento', function() {
+        var lancamentoId = $(this).data('id');
+        var form = $('#formEditarLancamento');
+        form.attr('action', `/financas/simulacao/lancamento/editar/${lancamentoId}/`); // ATUALIZAR URL
+
+        $.ajax({
+            url: `/financas/simulacao/lancamento/json/${lancamentoId}/`, // ATUALIZAR URL
+            success: function(data) {
+                // Preenche o formulário do modal
+                form.find('#id_descricao').val(data.descricao);
+                form.find('#id_tipo').val(data.tipo);
+                form.find('#id_valor').val(data.valor);
+                modalEditar.show();
+            }
+        });
+    });
+
+    $('#formEditarLancamento').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'POST', url: $(this).attr('action'), data: $(this).serialize(),
+            success: function(response) {
+                if (response.success) { 
+                    location.reload(); // Recarrega para ver a alteração no total e na tabela
+                } else { 
+                    alert('Erro ao salvar. Verifique os campos.'); 
+                }
+            }
+        });
+    });
+
+    // --- LÓGICA DE EXCLUSÃO ---
+    $('#tabela-lancamentos-simulacao tbody').on('click', '.btn-excluir-lancamento', function() {
+        var lancamentoId = $(this).data('id');
+        $('#formExcluirLancamento').attr('action', `/financas/simulacao/lancamento/deletar/${lancamentoId}/`); // ATUALIZAR URL
+        modalExcluir.show();
+    });
+
+    $('#formExcluirLancamento').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'POST', url: $(this).attr('action'), data: $(this).serialize(),
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Recarrega para ver a alteração no total e na tabela
+                } else { 
+                    alert('Erro ao excluir.'); 
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

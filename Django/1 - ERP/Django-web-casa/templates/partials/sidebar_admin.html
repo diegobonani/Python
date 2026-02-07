@@ -1,0 +1,153 @@
+{% load static %}
+
+<div class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark shadow h-100">
+    
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-shrink-0">
+        <a href="/" class="d-flex align-items-center text-white text-decoration-none overflow-hidden me-2">
+            <div class="bg-primary rounded-3 d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width: 35px; height: 35px;">
+                <i class="fas fa-home"></i>
+            </div>
+            <span class="fs-5 fw-bold text-truncate">Gestão Casa</span>
+        </a>
+
+        <div class="dropdown">
+            <button class="btn btn-icon btn-sm text-white-50 hover-white" type="button" id="dropdownConfig" data-bs-toggle="dropdown" aria-expanded="false" title="Configurações Globais">
+                <i class="fas fa-cog fa-lg"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow" aria-labelledby="dropdownConfig" style="z-index: 1050;">
+                <li><h6 class="dropdown-header text-uppercase small">Sistema</h6></li>
+                <li>
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-swatchbook me-2 text-muted"></i> Layout / Tema
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-warning" href="#" data-bs-toggle="modal" data-bs-target="#modalGlobalExportacao">
+                        <i class="fas fa-file-export me-2"></i> Exportar Dados
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <hr class="text-white-50 mt-0 mb-2 flex-shrink-0">
+
+    <div class="flex-grow-1 overflow-auto custom-scrollbar pe-2">
+        <ul class="nav nav-pills flex-column mb-auto">
+            
+            <li class="nav-item">
+                <a href="/" class="nav-link text-white text-truncate {% if request.path == '/' %}active{% endif %}">
+                    <i class="fas fa-chart-pie me-2 fa-fw"></i> Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'alimentacao:gerenciar_alimentacao' %}" class="nav-link text-white text-truncate {% if 'alimentacao' in request.path %}active{% endif %}">
+                    <i class="fas fa-utensils me-2 fa-fw"></i> Gerenciar Alimentação
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'estoque:gerenciar_estoque' %}" class="nav-link text-white text-truncate {% if 'estoque' in request.path %}active{% endif %}">
+                    <i class="fas fa-boxes me-2 fa-fw"></i> Gerenciar Estoque
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'financas:gerenciar_financas' %}" class="nav-link text-white text-truncate {% if 'financas' in request.path %}active{% endif %}">
+                    <i class="fas fa-wallet me-2 fa-fw"></i> Gerenciar Finanças
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'estudos:gerenciar_estudos' %}" class="nav-link text-white text-truncate {% if 'estudos' in request.path %}active{% endif %}">
+                    <i class="fas fa-graduation-cap me-2 fa-fw"></i> Gerenciar Estudos
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'jornada:gerenciar_jornada' %}" class="nav-link text-white text-truncate {% if 'jornada' in request.path and 'estudos' not in request.path %}active{% endif %}">
+                    <i class="fas fa-briefcase me-2 fa-fw"></i> Gerenciar Jornadas
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'lavanderia:gerenciar_lavanderia' %}" class="nav-link text-white text-truncate {% if 'lavanderia' in request.path %}active{% endif %}">
+                    <i class="fas fa-tshirt me-2 fa-fw"></i> Gerenciar Lavanderia
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'rede:gerenciar_rede' %}" class="nav-link text-white text-truncate {% if 'rede' in request.path %}active{% endif %}">
+                    <i class="fas fa-wifi me-2 fa-fw"></i> Gerenciar Rede
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'deslocamento:gerenciar_deslocamentos' %}" class="nav-link text-white text-truncate {% if 'deslocamento' in request.path %}active{% endif %}">
+                    <i class="fas fa-route me-2 fa-fw"></i> Gerenciar Rotas
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'rotinas:gerenciar_rotinas' %}" class="nav-link text-white text-truncate {% if 'rotinas' in request.path %}active{% endif %}">
+                    <i class="fas fa-clipboard-list me-2 fa-fw"></i> Gerenciar Rotinas
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'carro:gerenciar_veiculo' %}" class="nav-link text-white text-truncate {% if 'veiculos' in request.path or 'carro' in request.path %}active{% endif %}">
+                    <i class="fas fa-car me-2 fa-fw"></i> Gerenciar Veículos
+                </a>
+            </li>
+
+            {% if user.is_superuser %}
+            <li class="mt-3">
+                <a href="/admin/" class="nav-link text-white bg-danger bg-opacity-25 hover-danger text-truncate border border-danger border-opacity-25">
+                    <i class="fas fa-cogs me-2 fa-fw"></i> Admin Django
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="py-4"></li> 
+        </ul>
+    </div>
+    
+    <hr class="text-white-50 mt-2 mb-2 flex-shrink-0">
+    
+    <div class="dropdown flex-shrink-0">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle p-2 rounded hover-bg-dark-light" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="bg-primary rounded-circle d-flex justify-content-center align-items-center me-2 text-white fw-bold shadow-sm flex-shrink-0" style="width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.2);">
+                {{ user.username|slice:":1"|upper }}
+            </div>
+            <div class="d-flex flex-column overflow-hidden">
+                <strong class="text-truncate" style="font-size: 0.9rem;">{{ user.username|title }}</strong>
+                <small class="text-white-50" style="font-size: 0.75rem;">Online</small>
+            </div>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+            <li><a class="dropdown-item" href="#">Meu Perfil</a></li>
+            <li><a class="dropdown-item" href="#">Configurações</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <form action="{% url 'logout' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger fw-bold">
+                        <i class="fas fa-sign-out-alt me-2"></i>Sair
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<style>
+    .hover-white:hover { color: #fff !important; transform: rotate(15deg); transition: 0.3s; }
+    .hover-bg-dark-light:hover { background-color: rgba(255,255,255,0.1); }
+    /* Scrollbar fina */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+</style>

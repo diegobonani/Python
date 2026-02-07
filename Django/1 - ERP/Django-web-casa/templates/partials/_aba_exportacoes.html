@@ -1,0 +1,310 @@
+{% load static %}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-layer-group me-2"></i>Selecione os Módulos</h6>
+            </div>
+            
+            <div class="card-body p-0">
+                <form id="formExportacao" action="{% url 'core:processar_exportacao' %}" method="post">
+                    {% csrf_token %}
+
+                    <div class="accordion accordion-flush" id="accordionModules">
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingAlimentacao">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAlimentacao">
+                                    <i class="fas fa-utensils me-2 text-warning"></i> Alimentação
+                                </button>
+                            </h2>
+                            <div id="collapseAlimentacao" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_alimentacao" value="cardapio">
+                                        <label class="form-check-label">Cardápio Semanal</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_alimentacao" value="historico_refeicoes">
+                                        <label class="form-check-label">Histórico de Refeições</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingDeslocamento">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDeslocamento">
+                                    <i class="fas fa-route me-2 text-info"></i> Deslocamento & Rotas
+                                </button>
+                            </h2>
+                            <div id="collapseDeslocamento" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_deslocamento" value="rotas_frequentes">
+                                        <label class="form-check-label">Rotas Frequentes</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_deslocamento" value="historico_viagens">
+                                        <label class="form-check-label">Histórico de Viagens</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingEstoque">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEstoque">
+                                    <i class="fas fa-boxes me-2 text-primary"></i> Estoque & Compras
+                                </button>
+                            </h2>
+                            <div id="collapseEstoque" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_estoque" value="visao_geral" checked>
+                                        <label class="form-check-label fw-bold">Visão Geral (Saldo Atual)</label>
+                                    </div>
+
+                                    <div class="ms-4 mb-3 border-start border-3 border-primary ps-3 bg-white py-2 rounded pe-2">
+                                        <small class="text-uppercase text-muted fw-bold d-block mb-2" style="font-size: 0.7rem;">
+                                            <i class="fas fa-filter me-1"></i>Filtrar por Setor:
+                                        </small>
+                                        
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dados_estoque" value="filtro_todos" checked>
+                                            <label class="form-check-label small">Todos os Setores</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dados_estoque" value="filtro_casa">
+                                            <label class="form-check-label small">Apenas Casa</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dados_estoque" value="filtro_pet">
+                                            <label class="form-check-label small">Apenas Pets</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="dados_estoque" value="filtro_usuario">
+                                            <label class="form-check-label small">Apenas Usuários</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_estoque" value="lista_compras">
+                                        <label class="form-check-label">Lista de Compras (Sugestão)</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_estoque" value="historico">
+                                        <label class="form-check-label">Histórico de Movimentações</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_estoque" value="simulacao">
+                                        <label class="form-check-label">Simulação de Gastos</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingEstudos">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEstudos">
+                                    <i class="fas fa-graduation-cap me-2 text-info"></i> Estudos
+                                </button>
+                            </h2>
+                            <div id="collapseEstudos" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_estudos" value="cronograma">
+                                        <label class="form-check-label">Cronograma / Aulas</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_estudos" value="notas">
+                                        <label class="form-check-label">Notas e Tarefas</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFinancas">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFinancas">
+                                    <i class="fas fa-wallet me-2 text-success"></i> Finanças
+                                </button>
+                            </h2>
+                            <div id="collapseFinancas" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_financas" value="extrato">
+                                        <label class="form-check-label">Extrato do Mês</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_financas" value="balanco">
+                                        <label class="form-check-label">Balanço por Categoria</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingJornada">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJornada">
+                                    <i class="fas fa-briefcase me-2 text-secondary"></i> Jornadas
+                                </button>
+                            </h2>
+                            <div id="collapseJornada" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_jornada" value="pontos">
+                                        <label class="form-check-label">Espelho de Ponto</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_jornada" value="banco_horas">
+                                        <label class="form-check-label">Banco de Horas</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingLavanderia">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLavanderia">
+                                    <i class="fas fa-tshirt me-2 text-primary"></i> Lavanderia
+                                </button>
+                            </h2>
+                            <div id="collapseLavanderia" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_lavanderia" value="ciclos_ativos">
+                                        <label class="form-check-label">Ciclos de Lavagem</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_lavanderia" value="produtos">
+                                        <label class="form-check-label">Consumo de Produtos</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingRede">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRede">
+                                    <i class="fas fa-wifi me-2 text-dark"></i> Rede
+                                </button>
+                            </h2>
+                            <div id="collapseRede" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_rede" value="dispositivos">
+                                        <label class="form-check-label">Lista de Dispositivos</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_rede" value="logs">
+                                        <label class="form-check-label">Logs de Conexão</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingRotinas">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRotinas">
+                                    <i class="fas fa-clipboard-list me-2 text-success"></i> Rotinas
+                                </button>
+                            </h2>
+                            <div id="collapseRotinas" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_rotinas" value="tarefas_diarias">
+                                        <label class="form-check-label">Tarefas Diárias</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_rotinas" value="checklist">
+                                        <label class="form-check-label">Checklists Ativos</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingVeiculos">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVeiculos">
+                                    <i class="fas fa-car me-2 text-danger"></i> Veículos
+                                </button>
+                            </h2>
+                            <div id="collapseVeiculos" class="accordion-collapse collapse" data-bs-parent="#accordionModules">
+                                <div class="accordion-body bg-light">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_veiculos" value="abastecimentos">
+                                        <label class="form-check-label">Histórico de Abastecimento</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_veiculos" value="manutencao">
+                                        <label class="form-check-label">Manutenções e Serviços</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="dados_veiculos" value="documentos">
+                                        <label class="form-check-label">Status de Docs/IPVA</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div> </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="d-flex flex-column gap-3 h-100">
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-file-alt me-2"></i>Formato do Arquivo</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="formato" id="fmt_pdf" value="pdf" form="formExportacao" checked>
+                            <label class="btn btn-outline-danger w-100" for="fmt_pdf">
+                                <i class="fas fa-file-pdf fa-lg me-2"></i>PDF
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="formato" id="fmt_excel" value="excel" form="formExportacao">
+                            <label class="btn btn-outline-success w-100" for="fmt_excel">
+                                <i class="fas fa-file-excel fa-lg me-2"></i>Excel
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm flex-grow-1">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-clock me-2"></i>Automação</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10 small mb-3">
+                        <i class="fas fa-robot me-1"></i>
+                        Ao ativar, o sistema usará as opções selecionadas ao lado para gerar o relatório todo dia à 00:00.
+                    </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="checkAutomacao" name="agendar_automatico" value="true" form="formExportacao">
+                        <label class="form-check-label fw-bold" for="checkAutomacao">Ativar Rotina Diária</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Salvar em (Nuvem):</label>
+                        <input type="text" class="form-control form-control-sm" name="caminho_nuvem" placeholder="C:\Google Drive..." form="formExportacao">
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0 pb-3">
+                    <button type="submit" form="formExportacao" class="btn btn-primary w-100 fw-bold py-2">
+                        <i class="fas fa-check-circle me-2"></i> Confirmar / Gerar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

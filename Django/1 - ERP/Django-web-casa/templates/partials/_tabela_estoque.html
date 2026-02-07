@@ -1,0 +1,45 @@
+<table id="tabela-estoque" class="table table-striped table-bordered" style="width:100%">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Categoria</th>
+        <th>Dono/Setor</th>
+        <th>Quantidade</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in itens_estoque %}
+        <tr>
+          <td>{{ item.item_casa.nome_item_casa|default:item.nome_item }}</td>
+          <td>{{ item.categoria.nome_categoria|default:"N/A" }}</td>
+          <td>
+            {% if item.usuario %}
+              <span class="badge bg-info">{{ item.usuario.username }}</span>
+            {% elif item.pet %}
+              <span class="badge bg-warning text-dark">{{ item.pet.nome_pet }} (Pet)</span>
+            {% elif item.item_casa %}
+              <span class="badge bg-secondary">{{ item.item_casa.comodo.nome_item_casa|default:"Casa" }}</span>
+            {% else %}
+              N/D
+            {% endif %}
+          </td>
+          
+          <td class="text-center">
+            {% if item.usuario or item.pet %}
+                {# Usuário ou Pet = Número Inteiro #}
+                {{ item.quantidade|floatformat:0 }}
+            {% else %}
+                {# Casa = Permite Decimal #}
+                {{ item.quantidade|floatformat:"-2g" }}
+            {% endif %}
+          </td>
+          
+          <td>
+            <a href="#" class="btn btn-primary btn-sm" title="Editar"><i class="fas fa-edit"></i></a>
+            <a href="#" class="btn btn-danger btn-sm" title="Excluir"><i class="fas fa-trash"></i></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>

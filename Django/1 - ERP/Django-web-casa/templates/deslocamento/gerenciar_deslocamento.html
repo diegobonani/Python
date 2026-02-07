@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Gerenciar Deslocamentos{% endblock %}
+
+{% block style %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+    <style>
+        /* Ajustes essenciais para o mapa (obrigatório para Leaflet) */
+        .map-wrapper {
+            min-height: 400px;
+            height: 400px;
+            width: 100%;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            position: relative;
+            z-index: 1; /* Garante que o mapa fique abaixo dos modais */
+        }
+        
+        /* Ajustes de Autocomplete para ficar acima do mapa */
+        .ui-autocomplete { 
+            z-index: 9999 !important; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            font-size: 0.9rem; 
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex" style="min-height: 100vh;">
+    
+    <div class="flex-shrink-0 bg-dark" style="width: 280px;">
+        {% include 'partials/sidebar_admin.html' %}
+    </div>
+
+    <div class="flex-grow-1 bg-light" style="overflow-y: auto; max-height: 100vh;">
+        <div class="container-fluid p-4">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-0 text-gray-800"><i class="fas fa-route me-2 text-primary"></i>Gerenciar Deslocamentos</h2>
+                    <span class="text-muted small">Controle de rotas, quilometragem e custos de combustível.</span>
+                </div>
+                <div class="date-display text-muted bg-white px-3 py-2 rounded shadow-sm border">
+                    <i class="far fa-calendar-alt me-2 text-primary"></i> {% now "d \d\e F \d\e Y" %}
+                </div>
+            </div>
+
+            <div class="card shadow mb-4 border-0">
+                
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list me-2"></i>Histórico de Rotas</h6>
+                    <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAdicionarDeslocamento">
+                        <i class="fas fa-plus-circle me-1"></i> Nova Rota
+                    </button>
+                </div>
+                
+                <div class="card-body">
+                    
+                    <div class="row g-2 align-items-end mb-4 bg-light p-3 rounded border">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted mb-0">Filtrar por</label>
+                            <select id="filtro_tipo" class="form-select form-select-sm">
+                                <option value="mes_atual" selected>📅 Mês Atual</option>
+                                <option value="hoje">📆 Hoje</option>
+                                <option value="ontem">⏪ Ontem</option>
+                                <option value="dia_especifico">📌 Dia Específico</option>
+                                <option value="mes_especifico">🗓️ Mês Específico</option>
+                                <option value="periodo">↔️ Período (De/Até)</option>
+                                <option value="todos">📂 Todos os Registros</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 filtro-container d-none" id="container-dia">
+                            <label class="form-label small fw-bold text-muted mb-0">Data</label>
+                            <input type="date" id="input_dia_especifico" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3 filtro-container d-none" id="container-mes">
+                            <label class="form-label small fw-bold text-muted mb-0">Mês</label>
+                            <input type="month" id="input_mes_especifico" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4 filtro-container d-none" id="container-periodo">
+                            <label class="form-label small fw-bold text-muted mb-0">Período</label>
+                            <div class="input-group input-group-sm">
+                                <input type="date" id="input_periodo_inicio" class="form-control">
+                                <span class="input-group-text">até</span>
+                                <input type="date" id="input_periodo_fim" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="col-md-auto ms-auto d-flex gap-2">
+                            <button type="button" id="btn-filtrar" class="btn btn-primary btn-sm px-3 fw-bold">
+                                <i class="fas fa-search me-1"></i> Buscar
+                            </button>
+                            <button type="button" id="btn-limpar" class="btn btn-outline-secondary btn-sm px-3">
+                                Limpar
+                            </button>
+                            <input type="hidden" id="filtro_data_inicio">
+                            <input type="hidden" id="filtro_data_fim">
+                        </div>
+                        
+                        <div class="col-auto" id="loading-spinner" style="display:none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        </div>
+                    </div>
+
+                    <div id="tabela-deslocamentos-container" class="table-responsive">
+                        {% include 'partials/_tabela_deslocamentos.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAdicionarDeslocamento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formAdicionarDeslocamento" action="{% url 'deslocamento:registrar_dia_deslocamento' %}" method="POST">
+                {% csrf_token %}
+                
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-map-marked-alt me-2"></i>Nova Rota</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div id="form-errors" class="alert alert-danger d-none"></div>
+                    
+                    <div class="row">
+                        <div class="col-lg-7 mb-3 mb-lg-0">
+                            <div class="alert alert-info py-2 px-3 small mb-2 shadow-sm">
+                                <i class="fas fa-info-circle me-1"></i> Clique no mapa para adicionar pontos ou pesquise endereços.
+                            </div>
+                            <div id="map-cadastro-wrapper" class="map-wrapper shadow-sm">
+                                <div id="map-cadastro" style="height: 100%; width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-5">
+                            <h6 class="text-primary border-bottom pb-2 fw-bold">Pontos da Rota</h6>
+                            <div id="waypoints-container" class="mb-3 bg-light border rounded p-2" style="max-height: 250px; overflow-y: auto;">
+                                </div>
+                            
+                            <button id="btnAddWaypoint" type="button" class="btn btn-sm btn-outline-primary w-100 mb-4 fw-bold">
+                                <i class="fas fa-plus-circle me-1"></i> Adicionar Parada Manualmente
+                            </button>
+                            
+                            <h6 class="text-primary border-bottom pb-2 fw-bold">Detalhes da Viagem</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-muted mb-0">Data</label>
+                                    {{ form_adicionar.data }}
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-muted mb-0">Veículo</label>
+                                    {{ form_adicionar.veiculo }}
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-muted mb-0">Combustível</label>
+                                    {{ form_adicionar.tipo_combustivel }}
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-muted mb-0">Trajeto</label>
+                                    {{ form_adicionar.tipo_trajeto }}
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-muted mb-0">Preço Litro (R$)</label>
+                                    {{ form_adicionar.valor_litro }}
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-bold text-muted mb-0">Consumo (Km/L)</label>
+                                    {{ form_adicionar.consumo_manual }}
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold text-muted mb-0">Observações</label>
+                                    {{ form_adicionar.observacoes }}
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" name="enderecos_waypoints" id="id_enderecos_waypoints">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Salvar Rota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarDeslocamento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formEditarDeslocamento" method="POST">
+                {% csrf_token %}
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Rota</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div id="form-errors-edit" class="alert alert-danger d-none"></div>
+                    
+                    <div class="row">
+                        <div class="col-lg-7 mb-3 mb-lg-0">
+                            <div class="alert alert-warning py-2 px-3 small mb-2 shadow-sm">
+                                <i class="fas fa-exclamation-triangle me-1"></i> Atenção: Alterar a rota recalcula a quilometragem.
+                            </div>
+                            <div id="map-editar-wrapper" class="map-wrapper shadow-sm">
+                                <div id="map-editar" style="height: 100%; width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-5">
+                            <h6 class="text-dark border-bottom pb-2 fw-bold">Rota Atual</h6>
+                            <div id="waypoints-container-edit" class="mb-3 bg-light border rounded p-2" style="max-height: 250px; overflow-y: auto;"></div>
+                            
+                            <button id="btnAddWaypointEdit" type="button" class="btn btn-sm btn-outline-secondary w-100 mb-4 fw-bold">
+                                <i class="fas fa-plus"></i> Adicionar Parada
+                            </button>
+                            
+                            <h6 class="text-dark border-bottom pb-2 fw-bold">Dados da Viagem</h6>
+                            <div class="row g-2">
+                                <div class="col-6"><label class="form-label small m-0">Data</label>{{ form_adicionar.data }}</div>
+                                <div class="col-6"><label class="form-label small m-0">Veículo</label>{{ form_adicionar.veiculo }}</div>
+                                <div class="col-6"><label class="form-label small m-0">Combustível</label>{{ form_adicionar.tipo_combustivel }}</div>
+                                <div class="col-6"><label class="form-label small m-0">Trajeto</label>{{ form_adicionar.tipo_trajeto }}</div>
+                                <div class="col-6"><label class="form-label small m-0">Preço (R$)</label>{{ form_adicionar.valor_litro }}</div>
+                                <div class="col-6"><label class="form-label small m-0">Manual</label>{{ form_adicionar.consumo_manual }}</div>
+                                <div class="col-12"><label class="form-label small m-0">Obs</label>{{ form_adicionar.observacoes }}</div>
+                            </div>
+                            <input type="hidden" name="enderecos_waypoints" id="id_enderecos_waypoints_edit">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning fw-bold px-4">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetalhesPercursos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detalhes da Rota</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" id="detalhes-percurso-body">
+                <div class="text-center p-5">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="mt-2 text-muted">Carregando detalhes...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.URL_TABELA_DESLOCAMENTOS = "{% url 'deslocamento:resumo_deslocamento_partial' %}";
+    window.URL_ADICIONAR_DESLOCAMENTO = "{% url 'deslocamento:registrar_dia_deslocamento' %}";
+    window.URL_DETALHES_PERCURSO = "{% url 'deslocamento:detalhes_percurso_ajax' 0 %}";
+    window.URL_EDITAR_DESLOCAMENTO = "{% url 'deslocamento:editar_deslocamento_ajax' 0 %}";
+    window.URL_GET_JSON = "{% url 'deslocamento:get_deslocamento_json' 0 %}";
+    window.DATATABLES_LANGUAGE_URL = "https://cdn.datatables.net/plug-ins/2.0.8/i18n/pt-BR.json";
+    window.TOM_TOM_API_KEY = "{{ tomtom_api_key }}";
+</script>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{% static 'js/gerenciar_deslocamento.js' %}"></script>
+{% endblock %}
