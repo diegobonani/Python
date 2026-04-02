@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel TV - Rotinas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #0f1115; color: #e9ecef; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+        
+        .tv-header { background-color: #161a20; padding: 20px 40px; border-bottom: 2px solid #2d333b; display: flex; justify-content: space-between; align-items: center; }
+        .tv-header h1 { margin: 0; font-weight: 900; font-size: 2.5rem; letter-spacing: 2px; }
+        .clock-display { font-size: 3.5rem; font-weight: 900; color: #0d6efd; text-shadow: 0 0 20px rgba(13,110,253,0.4); }
+        
+        .task-grid { padding: 30px; }
+        .tv-card { background-color: #1e2229; border-radius: 15px; border-left: 8px solid #495057; margin-bottom: 25px; display: flex; align-items: center; padding: 20px 30px; transition: all 0.3s; }
+        
+        .tv-card.status-pendente { border-left-color: #ffc107; }
+        .tv-card.status-concluido { border-left-color: #198754; opacity: 0.4; }
+        .tv-card.status-nao_feito { border-left-color: #dc3545; }
+        
+        .tv-card.expirando { border-left-color: #dc3545; animation: piscarUrgente 1s infinite; box-shadow: 0 0 20px rgba(220,53,69,0.5); }
+        
+        .tv-time { font-size: 2.8rem; font-weight: 900; width: 150px; color: #adb5bd; }
+        .tv-task-name { font-size: 2.2rem; font-weight: 800; margin: 0; }
+        .tv-user { font-size: 1.5rem; color: #a9b0b7; font-weight: 600; text-transform: uppercase; background: #2d333b; padding: 5px 15px; border-radius: 10px; margin-top: 8px; display: inline-block; }
+        
+        .tv-status-icon { font-size: 3.5rem; margin-left: auto; }
+        .icon-pendente { color: #ffc107; }
+        .icon-concluido { color: #198754; }
+        .icon-nao_feito { color: #dc3545; }
+
+        /* TELA DE DESBLOQUEIO OTIMIZADA PARA TV */
+        #unlock-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .btn-tv-unlock { background-color: #0d6efd; color: white; border: none; padding: 30px 60px; font-size: 2.5rem; font-weight: 900; border-radius: 20px; cursor: pointer; box-shadow: 0 10px 30px rgba(13,110,253,0.5); }
+        .btn-tv-unlock:focus, .btn-tv-unlock:hover { background-color: #0b5ed7; outline: 5px solid white; }
+
+        body.alerta-ativo { animation: sireneGeral 0.5s infinite; }
+
+        @keyframes piscarUrgente { 0% { background-color: #1e2229; } 50% { background-color: #3b1c1e; } 100% { background-color: #1e2229; } }
+        @keyframes sireneGeral { 0% { background-color: #0f1115; } 50% { background-color: #4a0005; } 100% { background-color: #0f1115; } }
+    </style>
+</head>
+<body>
+
+    <div id="unlock-overlay">
+        <button class="btn-tv-unlock" id="btn-iniciar" onclick="iniciarTV()">
+            <i class="fas fa-volume-up me-3"></i> INICIAR PAINEL
+        </button>
+        <p class="text-secondary mt-4 fs-3">Pressione OK no controle para ligar o áudio</p>
+    </div>
+
+    <audio id="audio-alerta" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_c6ccf3232f.mp3?filename=emergency-alarm-with-reverb-29431.mp3" preload="auto"></audio>
+    <audio id="audio-musica" src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" preload="auto" loop></audio>
+    <audio id="audio-notificacao" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_bb630cc098.mp3?filename=short-success-sound-glockenspiel-treasure-video-game-6346.mp3" preload="auto"></audio>
+    <audio id="audio-tic-tac" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_1e37bc902b.mp3?filename=beep-03-98004.mp3" preload="auto"></audio>
+
+    <div class="tv-header">
+        <div>
+            <h1>
+                <i class="fas fa-satellite-dish text-primary me-3"></i>
+                {% if usuario_focado %}ROTINA - {{ usuario_focado.username|upper }}{% else %}ROTINA DA CASA{% endif %}
+            </h1>
+            <h4 class="text-secondary mt-2 fw-bold">HOJE, {{ data_atual }}</h4>
+        </div>
+        <div class="clock-display" id="relogio">--:--</div>
+    </div>
+
+    <div class="container-fluid task-grid">
+        {% if tarefas %}
+            {% for t in tarefas %}
+                <div class="tv-card status-{{ t.status|lower }} task-item" 
+                     data-id="{{ t.id }}"
+                     data-status="{{ t.status }}" 
+                     data-nome="{{ t.rotina.nome }}"
+                     data-user="{{ t.usuario.username }}"
+                     data-pontos="{{ t.rotina.pontuacao_base }}"
+                     data-hora="{% if t.prazo_hora %}{{ t.prazo_hora|time:'H:i' }}{% endif %}"
+                     data-limite="{{ t.prazo_limite|date:'c' }}"
+                     data-adulto="{% if t.usuario.username in lista_adultos %}true{% else %}false{% endif %}">
+                    
+                    <div class="tv-time">
+                        {% if t.prazo_hora %}{{ t.prazo_hora|time:"H:i" }}{% else %}Livre{% endif %}
+                    </div>
+                    <div>
+                        <p class="tv-task-name {% if t.status == 'CONCLUIDO' %}text-decoration-line-through{% endif %}">{{ t.rotina.nome }}</p>
+                        
+                        <div class="tv-user">
+                            <i class="fas fa-user me-2"></i>{{ t.usuario.username }}
+                            {% if t.usuario.username in lista_adultos %}
+                                <span class="badge bg-secondary ms-2" style="font-size: 0.8rem; vertical-align: middle;">Responsável</span>
+                            {% else %}
+                                <span class="badge bg-success ms-2" style="font-size: 0.8rem; vertical-align: middle;"><i class="fas fa-coins me-1"></i>{{ t.rotina.pontuacao_base }} pts</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="tv-status-icon">
+                        {% if t.status == 'CONCLUIDO' %}<i class="fas fa-check-circle icon-concluido"></i>
+                        {% elif t.status == 'NAO_FEITO' %}<i class="fas fa-times-circle icon-nao_feito"></i>
+                        {% else %}<i class="far fa-circle icon-pendente"></i>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-mug-hot fa-4x text-muted mb-3 opacity-25"></i>
+                <h2 class="text-muted fw-bold mt-4">Nenhuma tarefa no momento.</h2>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Foca no botão automaticamente pro controle remoto achar rápido
+        document.getElementById('btn-iniciar').focus();
+
+        let painelAtivo = false;
+        let tempoCarregamentoDaPagina = Date.now() / 1000;
+
+        // ==========================================
+        // SISTEMA DE VOZ + SINO DE EMERGÊNCIA
+        // ==========================================
+        let filaFalas = [];
+        let falando = false;
+        let suporteVoz = ('speechSynthesis' in window);
+
+        function alertarTV(texto) {
+            if (!painelAtivo) return; 
+
+            if (suporteVoz) {
+                try {
+                    let msg = new SpeechSynthesisUtterance(texto);
+                    msg.lang = 'pt-BR';
+                    window.speechSynthesis.speak(msg);
+                } catch(e) {
+                    document.getElementById('audio-notificacao').play().catch(err=>{});
+                }
+            } else {
+                document.getElementById('audio-notificacao').play().catch(err=>{});
+            }
+        }
+
+        function formatarHoraFalada(horaStr) {
+            if (!horaStr || horaStr.trim() === '') return "horário livre";
+            let partes = horaStr.split(":");
+            let h = parseInt(partes[0]);
+            let m = parseInt(partes[1]);
+            
+            let periodo = "da manhã";
+            let hTexto = h;
+
+            if (h >= 12) {
+                if (h > 12) hTexto = h - 12;
+                periodo = h < 18 ? "da tarde" : "da noite";
+            }
+            if (h === 0) { hTexto = 12; periodo = "da noite"; }
+
+            let mTexto = m > 0 ? `e ${m}` : "em ponto";
+            return `${hTexto} ${mTexto} ${periodo}`;
+        }
+
+        // ==========================================
+        // FUNÇÕES GERAIS DA TV
+        // ==========================================
+
+        function iniciarTV() {
+            document.getElementById('unlock-overlay').style.display = 'none';
+            painelAtivo = true;
+            
+            // 🌟 FORÇA A CARGA DE TODOS OS AUDIOS NA MEMÓRIA DA TV
+            const sons = ['audio-alerta', 'audio-musica', 'audio-tic-tac', 'audio-notificacao'];
+            sons.forEach(id => {
+                const audio = document.getElementById(id);
+                audio.muted = true; 
+                let playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        audio.muted = false; 
+                    }).catch(error => console.log('Bloqueado:', id));
+                }
+            });
+
+            setTimeout(() => {
+                let bip = document.getElementById('audio-notificacao');
+                bip.volume = 0.5;
+                bip.play().catch(e=>console.log(e));
+            }, 500);
+
+            verificarMudancasStatus(); 
+        }
+
+        function atualizarRelogio() {
+            const agora = new Date();
+            document.getElementById('relogio').innerText = `${agora.getHours().toString().padStart(2, '0')}:${agora.getMinutes().toString().padStart(2, '0')}`;
+        }
+        setInterval(atualizarRelogio, 1000);
+        atualizarRelogio();
+
+        function verificarMudancasStatus() {
+            if (!painelAtivo) return;
+            
+            let states = JSON.parse(localStorage.getItem('tv_task_states') || '{}');
+            let atualizou_memoria = false;
+
+            document.querySelectorAll('.task-item').forEach(card => {
+                let id = card.dataset.id;
+                let status = card.dataset.status;
+                let nome = card.dataset.nome;
+                let user = card.dataset.user;
+                let pontos = card.dataset.pontos;
+                let horaTexto = formatarHoraFalada(card.dataset.hora);
+                let isAdulto = card.dataset.adulto === "true";
+
+                let textoFalar = "";
+
+                if (!states[id]) {
+                    states[id] = status;
+                    atualizou_memoria = true;
+                } 
+                else if (states[id] !== status) {
+                    if (status === 'CONCLUIDO') {
+                        if (isAdulto) {
+                            textoFalar = `${user}, a tarefa ${nome} das ${horaTexto}, está concluída.`;
+                        } else {
+                            textoFalar = `Parabéns ${user}, a tarefa ${nome} das ${horaTexto}, está concluída. Você ganhou ${pontos} pontos.`;
+                        }
+                    } 
+                    else if (status === 'NAO_FEITO') {
+                        textoFalar = `Atenção ${user}, a tarefa ${nome} das ${horaTexto}, falhou.`;
+                    }
+                    
+                    if (textoFalar !== "") alertarTV(textoFalar);
+                    
+                    states[id] = status;
+                    atualizou_memoria = true;
+                }
+            });
+
+            if (atualizou_memoria) {
+                localStorage.setItem('tv_task_states', JSON.stringify(states));
+            }
+        }
+
+        function checarPrazos() {
+            if (!painelAtivo) return;
+            const agora = new Date().getTime();
+            let avisos_dados = JSON.parse(localStorage.getItem('tv_task_warned') || '{}');
+            let salvou = false;
+
+            document.querySelectorAll('.task-item').forEach(card => {
+                if(card.dataset.status !== 'PENDENTE') return; 
+                
+                const limiteStr = card.dataset.limite;
+                if(!limiteStr || limiteStr === 'None') return;
+
+                const tempoLimite = new Date(limiteStr).getTime();
+                const minutosFaltando = (tempoLimite - agora) / 60000;
+                let id = card.dataset.id;
+
+                if (minutosFaltando <= 5 && minutosFaltando > 0) {
+                    card.classList.add('expirando');
+                    
+                    if(!avisos_dados[id]) {
+                        let nome = card.dataset.nome;
+                        let user = card.dataset.user;
+                        
+                        alertarTV(`Atenção ${user}, a tarefa ${nome} está quase expirando!`);
+                        avisos_dados[id] = true;
+                        salvou = true;
+                    }
+                } else {
+                    card.classList.remove('expirando');
+                }
+            });
+
+            if(salvou) localStorage.setItem('tv_task_warned', JSON.stringify(avisos_dados));
+        }
+        setInterval(checarPrazos, 10000); 
+
+        /// ==========================================
+        // O CÉREBRO DA TV: INTERAÇÃO COM O SERVIDOR
+        // ==========================================
+        function checarControleRemoto() {
+            // 🌟 CACHE BUSTER: Impede que a Smart TV guarde a requisição na memória RAM dela
+            const urlSemCache = '/rotinas/tv/poll/?nocache=' + new Date().getTime();
+            
+            fetch(urlSemCache)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.last_update && data.last_update > tempoCarregamentoDaPagina) {
+                        window.location.reload(); 
+                        return;
+                    }
+
+                    // COMANDOS SEPARADOS (PLAY / PAUSE / ALERTA)
+                    if(data.comando === 'alerta') {
+                        document.body.classList.add('alerta-ativo');
+                        alertarTV("Atenção família! Olhem para o painel de rotinas.");
+                        
+                        setTimeout(() => {
+                            const alerta = document.getElementById('audio-alerta');
+                            alerta.volume = 1;
+                            alerta.currentTime = 0;
+                            alerta.play().catch(e => console.log('Erro ao tocar Sirene', e));
+                        }, 1500);
+                        
+                        setTimeout(() => document.body.classList.remove('alerta-ativo'), 5000);
+                    }
+                    else if(data.comando === 'tocar_musica') {
+                        const musica = document.getElementById('audio-musica');
+                        musica.volume = 0.8;
+                        musica.play().catch(e => console.log('Erro ao tocar Música', e));
+                    }
+                    else if(data.comando === 'pausar_musica') {
+                        const musica = document.getElementById('audio-musica');
+                        musica.pause();
+                    }
+                }).catch(e => console.log('Aguardando servidor...'));
+        }
+        setInterval(checarControleRemoto, 3000);
+        
+        setTimeout(verificarMudancasStatus, 1000);
+
+    </script>
+</body>
+</html>
