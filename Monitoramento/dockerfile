@@ -1,0 +1,28 @@
+# Usa uma imagem oficial do Python, leve e segura
+FROM python:3.11-slim
+
+# Define variáveis de ambiente para o Python rodar melhor no Docker
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Define o diretório de trabalho dentro do container
+WORKDIR /app
+
+# Instala as dependências do sistema operacional necessárias para o MySQL
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends default-libmysqlclient-dev build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copia o arquivo de requisitos e instala as bibliotecas Python (Django, etc)
+COPY requirements.txt /app/
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Copia todo o código do seu projeto para dentro do container
+COPY . /app/
+
+# Expõe a porta que o Django vai usar
+EXPOSE 8000
+
+# Comando para rodar o servidor (depois trocaremos para Gunicorn em produção)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

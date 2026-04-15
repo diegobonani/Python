@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | SaaS Infra{% endblock %}
+{% block page_title %}Dashboard de Monitoramento{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="alert alert-success shadow-sm">
+            <h5><i class="fa-solid fa-circle-check me-2"></i>Bem-vindo, {{ request.user.email }}!</h5>
+            <p class="mb-0">A sua estrutura base e arquivos estáticos estão funcionando perfeitamente.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

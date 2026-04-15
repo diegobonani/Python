@@ -1,0 +1,13 @@
+# Ignorar variáveis de ambiente e senhas
+.env
+
+# Ignorar o volume do banco de dados local
+mysql_data/
+
+# Ignorar arquivos temporários do Python
+__pycache__/
+<<<<<<< HEAD
+*.pyc
+=======
+*.pyc
+>>>>>>> dcdf8a69a3773e5e2b2b69bd95e2952003fc0210

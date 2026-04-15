@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # O Banco de Dados do seu SaaS
+  db:
+    image: mysql:8.0
+    container_name: saas_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql # Garante que os dados não sumam se o container reiniciar
+    networks:
+      - saas_network
+
+  # A sua aplicação Django
+  web:
+    build: .
+    container_name: saas_django
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app # Sincroniza o código local com o container para testes
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db # O Django acha o banco simplesmente pelo nome do container!
+    depends_on:
+      - db
+    networks:
+      - saas_network
+
+# Define as redes e volumes
+networks:
+  saas_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
